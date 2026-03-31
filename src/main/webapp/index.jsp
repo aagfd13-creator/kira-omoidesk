@@ -4,6 +4,7 @@
 <html>
 <head>
     <title>JSP - Hello World</title>
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
 <jsp:include page="${content}"></jsp:include>
