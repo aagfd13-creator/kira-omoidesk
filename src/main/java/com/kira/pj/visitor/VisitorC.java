@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet(name = "VisitorC", value = "/visitor")
 public class VisitorC extends HttpServlet {
@@ -13,20 +14,19 @@ public class VisitorC extends HttpServlet {
     // 화면을 보여주는 역할 (조회: Read)
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        // 1. DB 연동 (지금은 주석 처리된 상태 유지)
+        VisitorDAO dao = new VisitorDAO();
+        // 홈피 주인 ID(DongMin)를 기준으로 전체 조회
+        List<VisitorDTO> list = dao.getAllVisitors("DongMin");
+        // request.setAttribute("visitorList", list);
 
-        // 1. [DB 로직] DAO를 통해 오라클 DB에서 방문자 목록을 가져옵니다.
-        // 현재는 DAO를 만들지 않았으므로 주석 처리하거나 빈 리스트를 보냅니다.
-//         VisitorDAO visitorDAO = new VisitorDAO();
-        // List<VisitorDTO> visitorList = dao.getAllVisitors("DongMin"); // 홈피 주인 ID 기준 조회
+        // 2. 화면 설정 (파일명 앞에 /를 붙여 경로를 확실히 합니다)
+        request.setAttribute("visitorList", list);
+        request.setAttribute("content", "visitor/visitor.jsp");
 
-
-        // 2. 화면 설정
-        request.setAttribute("content", "visitor.jsp");
-
-        // 3. 메인 레이아웃으로 포워딩
-        request.getRequestDispatcher("main.jsp").forward(request, response);
+        // 3. 포워딩 (main.jsp가 WEB-INF 밖에 있다면 아래처럼, 안에 있다면 경로 수정)
+        request.getRequestDispatcher("index.jsp").forward(request, response);
     }
-
     // 새로운 방문 기록을 저장하는 역할 (생성: Create)
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

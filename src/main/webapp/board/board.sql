@@ -11,3 +11,4 @@ create table guestboard_test(
 insert into guestboard_test values ('1','1','1','test','test_content',0,systimestamp);
 
 select * from guestboard_test;
+select guest_nick, board_content, is_private, created_at from guestboard_test
