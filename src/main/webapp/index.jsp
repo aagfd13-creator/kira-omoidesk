@@ -3,15 +3,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-    <title>Minihome</title>
-
-    <link rel="stylesheet" href="/css/index.css">
-
-    <script defer src="/js/minihome.js"></script>
-
+    <title>JSP - Hello World</title>
+    <link rel="stylesheet" href="css/index.css">
 </head>
-
 <body>
 <div class="desk-wrapper">
     <div class="desk-surface">
@@ -28,8 +22,8 @@
                 <div class="menu-card">
                     <div class="menu-list">
                         <div class="menu-item active">홈</div>
-                        <div class="menu-item">다이어리</div>
-                        <div class="menu-item" onclick="location.href='pic'">사진첩</div>
+                        <div onclick="location.href='/diary'" class="menu-item">다이어리</div>
+                        <div class="menu-item">사진첩</div>
                         <div class="menu-item">방명록</div>
                     </div>
                 </div>
@@ -52,15 +46,11 @@
                 <div class="visitor">Today 15 | Total 1,234</div>
             </div>
 
-            <div class="nb-tabs">
-                <div class="nb-tab active">홈</div>
-                <div class="nb-tab">다이어리</div>
-                <div class="nb-tab" onclick="location.href='pic'">사진첩</div>
-                <div class="nb-tab">방명록</div>
-            </div>
+            <jsp:include page="${content}"></jsp:include>
 
-            <div class="nb-body">
-                <jsp:include page="${content}"></jsp:include>
+
+
+                </div>
             </div>
         </div>
 
