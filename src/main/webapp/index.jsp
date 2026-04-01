@@ -40,15 +40,19 @@
             </div>
         </div>
 
-        <div class="notebook">
+        <div class="notebook ${content eq 'visitor/visitor.jsp' ? 'is-visitor' : ''}">
             <div class="notebook-header">
                 <h2>📖 DongMin의 소소한 일상</h2>
                 <div class="visitor">Today 15 | Total 1,234</div>
             </div>
-
-            <jsp:include page="${content}"></jsp:include>
-
-
+            <c:choose>
+                <c:when test="${not empty content}">
+                    <jsp:include page="${content}"></jsp:include>
+                </c:when>
+                <c:otherwise>
+                    <jsp:include page="main.jsp"></jsp:include>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 </div>
