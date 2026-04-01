@@ -398,6 +398,10 @@ body::after {
     background: #fff;
     border-radius: 8px;
     border: 1px solid #eee0d0;
+    position: absolute;
+    bottom: 20px;
+    width: 90%;
+
 }
 
 .write-input {
@@ -407,9 +411,10 @@ body::after {
     border-bottom: 2px solid #f7cfcd;
     padding: 8px 5px;
     font-family: "Gaegu", cursive;
-    font-size: 14px;
+    font-size: 18px;
     color: #5a4a3a;
     outline: none;
+    text-align: left;
 }
 
 .write-btn {
@@ -458,9 +463,19 @@ body::after {
 }
 
 .post-text {
-    font-size: 14px;
+    font-size: 20px;
     color: #5a4a3a;
     line-height: 1.7;
+    height: 450px;
+    overflow-y: auto;
+}
+
+#gbContent{
+    font-weight:bold ;
+}
+#gbCreatedAt{
+    font-size: 14px;
+    right:0;
 }
 
 /* ============================

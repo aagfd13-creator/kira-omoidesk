@@ -8,6 +8,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class GuestBoardDAO {
     public static final GuestBoardDAO GBDAO = new GuestBoardDAO();
@@ -26,24 +28,29 @@ public class GuestBoardDAO {
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm", Locale.KOREAN);
+
             con = DBManager.connect();
             request.setCharacterEncoding("utf-8");
-            String sql = "select guest_nick, board_content, is_private, created_at from guestboard_test";
+            String sql = "select guest_nick, board_content, is_private, created_at from guestboard_test order by created_at";
 
             ps = con.prepareStatement(sql);
             rs = ps.executeQuery();
-            GuestBoardVO guestboard = new GuestBoardVO();
+            GuestBoardVO guestboard = null;
             ArrayList<GuestBoardVO> guestBoards = new ArrayList<>();
             while (rs.next()) {
+                guestboard = new GuestBoardVO();
                 guestboard.setBoard_content(rs.getString("board_content"));
                 guestboard.setGuest_nick(rs.getString("guest_nick"));
                 guestboard.setIs_private(rs.getInt("is_private"));
-                guestboard.setCreated_at(rs.getTimestamp("created_at").toLocalDateTime());
+                String formattedDate = rs.getTimestamp("created_at").toLocalDateTime().format(formatter);
+                guestboard.setCreated_at(formattedDate);
                 guestBoards.add(guestboard);
             }
 
             System.out.println("showGuestBoard success");
-            request.setAttribute("guestBoard", guestBoards);
+            System.out.println(guestBoards);
+            request.setAttribute("guestBoards", guestBoards);
 
         }catch (Exception e){
             e.printStackTrace();

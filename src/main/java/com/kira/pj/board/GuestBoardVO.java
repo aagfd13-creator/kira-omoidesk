@@ -13,5 +13,5 @@ public class GuestBoardVO {
     public String guest_nick;
     public String board_content;
     public int is_private;
-    public LocalDateTime created_at;
+    public String created_at;
 }

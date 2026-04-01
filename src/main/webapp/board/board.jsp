@@ -21,12 +21,18 @@
         <div class="post-item">
             <div class="post-header">
                 <span class="post-user">방명록</span>
-                <jsp:useBean id="now" class="java.util.Date" />
-                <span class="post-date"><fmt:formatDate value="${now}" pattern="yyyy-MM-dd" /></span>
+                <jsp:useBean id="now" class="java.util.Date"/>
+                <span class="post-date"><fmt:formatDate value="${now}" pattern="yyyy-MM-dd"/></span>
             </div>
             <div class="post-text">
-                <c:forEach items="${guestBoard}" var="gb">
-                    ${gb.guest_nick}/${gb.board_content}/${gb.created_at} <br>
+                <c:forEach items="${guestBoards}" var="gb">
+
+                    <div id="gbContent">
+                            ${gb.guest_nick} : ${gb.board_content}
+                    </div>
+                    <div id="gbCreatedAt">
+                            ${gb.created_at}
+                    </div>
                 </c:forEach>
 
             </div>
@@ -34,10 +40,10 @@
     </div>
 
     <form action="board" method="post">
-    <div class="write-row">
-        <input class="write-input" placeholder="인사를 남겨주세요! ✏️" name="content" type="text"/>
-        <button class="write-btn" >남기기</button>
-    </div>
+        <div class="write-row">
+            <input class="write-input" placeholder="인사를 남겨주세요! ✏️" name="content" type="text"/>
+            <button class="write-btn">남기기</button>
+        </div>
     </form>
 
 
