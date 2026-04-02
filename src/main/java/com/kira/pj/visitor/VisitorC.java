@@ -12,10 +12,21 @@ import java.util.List;
 public class VisitorC extends HttpServlet {
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String pStr = request.getParameter("p");
+        int p = (pStr == null) ? 1 : Integer.parseInt(pStr);
+
         VisitorDAO dao = new VisitorDAO();
-        List<VisitorDTO> list = dao.getAllVisitors("DongMin");
+        String ownerId = "DongMin";
+
+        List<VisitorDTO> list = dao.getVisitorsByPage(ownerId, p);
+        List<VisitorDTO> recent = dao.getRecentVisitors(ownerId);
+
         request.setAttribute("visitorList", list);
+        request.setAttribute("recentVisitors", recent);
+        request.setAttribute("currentPage", p);
 
         String ajax = request.getParameter("ajax");
         if ("true".equals(ajax)) {
@@ -27,13 +38,30 @@ public class VisitorC extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
         String visitorName = request.getParameter("visitorName");
 
-        System.out.println("오라클 DB 저장 시도: " + visitorName);
+        if (visitorName != null && !visitorName.trim().isEmpty()) {
+            VisitorDTO dto = new VisitorDTO();
+            dto.setV_writer_id(visitorName);
+            dto.setV_owner_id("DongMin");
 
-        response.sendRedirect("/visitor?ajax=true");
+            int randomEmoji = (int) (Math.random() * 5) + 1;
+            dto.setV_emoji(randomEmoji);
+
+            VisitorDAO dao = new VisitorDAO();
+            int result = dao.insertVisitor(dto);
+
+            if (result == 1) {
+                System.out.println("오라클 DB 저장 성공 (이모지 " + randomEmoji + "번): " + visitorName);
+            } else {
+                System.out.println("오라클 DB 저장 실패");
+            }
+        }
+
+        response.sendRedirect("visitor?ajax=true");
     }
 }
