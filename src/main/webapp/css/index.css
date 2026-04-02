@@ -59,6 +59,10 @@ body::after {
 
 .desk-surface {
     width: 100%;
+    gap: 25px;
+    align-items: flex-start;
+    padding: 40px 50px;
+    overflow: hidden;
     height: 100%;
     background-color: #fdf6ec;
     background-image: repeating-linear-gradient(
@@ -74,10 +78,7 @@ body::after {
     border-bottom: none;
     box-shadow: 0 -10px 30px rgba(180, 150, 120, 0.15),
     inset 0 0 50px rgba(255, 255, 255, 0.6);
-    padding: 40px 50px;
     display: flex;
-    gap: 25px;
-    align-items: flex-start;
     position: relative;
 }
 
@@ -300,6 +301,7 @@ body::after {
     height: 100%;
     position: relative;
     min-height: 500px;
+    min-width: 0;
     background: #fbfaff;
     border-radius: 10px;
     box-shadow: 5px 8px 25px rgba(100, 80, 110, 0.1);
@@ -373,6 +375,9 @@ body::after {
 }
 
 .nb-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
     flex: 1;
     padding: 20px 20px 20px 60px;
     background: #fdfcf8;
@@ -384,7 +389,7 @@ body::after {
             rgba(100, 100, 100, 0.02) 28px
     );
     position: relative;
-    overflow-y: auto;
+
 }
 
 /* ============================
@@ -393,14 +398,12 @@ body::after {
 .write-row {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-top: auto;
     padding: 15px;
     background: #fff;
     border-radius: 8px;
     border: 1px solid #eee0d0;
-    position: absolute;
-    bottom: 20px;
-    width: 1150px;
+    width: 100%;
 
 }
 
@@ -430,9 +433,12 @@ body::after {
 }
 
 .posts {
+    flex: 1; /* 남는 공간을 다 차지 */
+    
     display: flex;
     flex-direction: column;
     gap: 15px;
+    padding-right: 5px; /* 스크롤바와 내용 사이 간격 */
 }
 
 .post-item {
@@ -440,7 +446,8 @@ body::after {
     background: #fff;
     border-radius: 8px;
     border: 1px solid #f0eee5;
-    width:1150px
+    width:100%;
+    max-width: 100%;
 }
 
 .post-header {
@@ -470,8 +477,9 @@ body::after {
     font-size: 20px;
     color: #5a4a3a;
     line-height: 1.7;
-    height: 450px;
+    max-height: 450px;
     overflow-y: auto;
+    word-break: break-all;
 }
 
 #gbContent{
