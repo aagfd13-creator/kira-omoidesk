@@ -76,13 +76,18 @@ function renderPosts(visitorList) {
         else if (v.v_emoji == 3) emoji = '🐱';
         else if (v.v_emoji == 4) emoji = '🐶';
 
-        // ⭐️ 역슬래시(\) 전부 제거!
+        // ⭐️ v_writer_id(이름) 부분에 cursor:pointer와 onclick 이벤트를 추가했습니다.
         html += `
             <div class="post-item" style="display:flex; justify-content:space-between; align-items:center; padding:12px 20px; background:#fff; border-radius:10px; border:1px solid #f0eee5; box-shadow: 2px 2px 5px rgba(0,0,0,0.02);">
                 <div style="display:flex; align-items:center; gap:15px;">
                     <span class="moving-emoji" style="font-size: 22px; display: inline-block;">${emoji}</span>
                     <span style="font-size:18px; color:#5a4a3a;">
-                        <strong style="color:#f2a0a0;">${v.v_writer_id}</strong>님이 다녀갔습니다.
+                        <strong 
+                            style="color:#f2a0a0; cursor:pointer; text-decoration:underline; text-underline-offset: 3px;" 
+                            onclick="goToMinihome('${v.v_writer_id}')"
+                            title="${v.v_writer_id}님의 홈피로 파도타기!">
+                            ${v.v_writer_id}
+                        </strong>님이 다녀갔습니다.
                     </span>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
@@ -114,4 +119,19 @@ function renderPaging(visitorList, currentPage) {
     }
 
     container.innerHTML = html;
+}
+// 🌊 파도타기 (타인의 미니홈피로 이동) 함수
+function goToMinihome(targetId) {
+    // 상대방의 PK(targetId)가 잘 넘어오는지 확인
+    console.log("이동할 상대방 PK:", targetId);
+
+    // 일단 클릭이 잘 되는지 알림창으로 확인!
+    alert(targetId + "님의 미니홈피로 파도타기 기능을 나중에 연결할 거예요! 🏄‍♂️");
+
+    // 나중에 실제 구현할 때 쓸 코드 예시:
+    // 방법 1. 아예 새 창으로 미니홈피 팝업 띄우기 (싸이월드 감성)
+    // window.open(`/minihome?id=${targetId}`, '_blank', 'width=1000, height=700');
+
+    // 방법 2. 현재 창 안에서 전체 껍데기를 그 사람의 데이터로 갈아끼우기
+    // location.href = `/main?id=${targetId}`;
 }
