@@ -13,4 +13,4 @@ alter table userReg add u_email varchar2(100 char) unique;
 
 select * from USERREG;
 
-delete from USERREG where u_id='weweww';
+delete from USERREG where u_id='test2';

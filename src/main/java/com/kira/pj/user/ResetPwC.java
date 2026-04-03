@@ -2,26 +2,21 @@ package com.kira.pj.user;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.*;
 import java.io.IOException;
 
 @WebServlet("/reset-pw")
 public class ResetPwC extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.getRequestDispatcher("user/reset-pw.jsp").forward(request, response);
+    }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         request.setCharacterEncoding("UTF-8");
-
-        if (UserDAO.DAO.resetPassword(request)) {
-            
-            request.getSession().setAttribute("msg", "비밀번호 변경 성공");
-            response.sendRedirect(request.getContextPath() + "/login");
-        } else {
-            request.getRequestDispatcher("user/reset-pw.jsp").forward(request, response);
-        }
+        response.setContentType("application/json; charset=UTF-8");
+        response.getWriter().print(UserDAO.DAO.resetPassword(request));
     }
 }
