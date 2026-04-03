@@ -18,7 +18,7 @@ public class BoardC extends HttpServlet {
         // DAO에서 가져온 JSON 문자열을 그대로 출력
         response.getWriter().print(GuestBoardDAO.GBDAO.showGuestBoard(request, response));
     }
-}
+
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         GuestBoardDAO.GBDAO.addHi(request,response);

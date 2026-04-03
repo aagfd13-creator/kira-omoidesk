@@ -74,12 +74,80 @@
             </div>
         </div>
 
+       
+
+        <%-- ══ /가운데 ══ --%>
+
         <%-- ══ 오른쪽: MP3 + 스마트폰 + 포스트잇 ══ --%>
         <div class="right-col">
+
+            <%-- MP3 플레이어 (BGM 연결) --%>
+            <div class="mp3">
+                <div class="mp3-screen">
+                    <div class="mp3-marquee">
+                        <%--클릭하면 음악 상세페이지로 이동--%>
+                        <span id="bgm-title" class="mp3-title-inner"
+                              data-src="/bgm?ajax=true"
+                              style="cursor: pointer;">
+                            ♪ Hype Boy - NewJeans &nbsp;&nbsp;&nbsp;&nbsp;
+                            ♪ Attention - NewJeans
+                        </span>
+                    </div>
+                    <div class="mp3-controls-row">
+                        <div class="mp3-time" id="bgm-current">0:00</div>
+                        <div class="mp3-bar-mini">
+                            <div class="mp3-fill-mini" id="bgm-progress-bar"></div>
+                        </div>
+                        <div class="mp3-time" id="bgm-duration">0:00</div>
+                    </div>
+                </div>
+                <div class="mp3-buttons">
+                    <div class="mp3-btn" onclick="playPrev()">◀◀</div>
+                    <div class="mp3-btn play" id="bgm-toggle" onclick="togglePlay()">⏸</div>
+                    <div class="mp3-btn" onclick="playNext()">▶▶</div>
+                </div>
+            </div>
+
+            <%-- 스마트폰 (YouTube IFrame) --%>
+            <div class="smartphone">
+                <div class="phone-camera"></div>
+                <!-- 화면: YouTube iframe -->
+                <div class="phone-screen"
+                     data-src="/bgm?ajax=true"
+                     style="cursor: pointer;">
+                    <!-- YT IFrame API가 이 div를 iframe으로 교체 -->
+                    <div id="yt-player">
+                        <img src="https://pbs.twimg.com/media/Gew2zMua8AAJoOM.jpg">
+                    </div>
+                    <!-- 유튜브 바로가기 링크 -->
+                    <a id="yt-link" href="#" target="_blank" class="phone-yt-link">
+                        ▶ YouTube에서 보기
+                    </a>
+                </div>
+                <!-- 홈버튼 누르면 음악 상세페이지로 이동 -->
+                <div class="phone-home"
+                     data-src="/bgm?ajax=true"
+                     style="cursor: pointer"></div>
+            </div>
+
+            <%-- 방문자 보기도 iframe 방식으로 --%>
+            <div class="visitor-btn-wrap"
+                 onclick="switchTab('/visitor?ajax=true')">
+                <div class="visitor-btn-card">
+                    <span class="visitor-icon">🐾</span>
+                    <span class="visitor-text">방문자 보기</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="postit">
+            오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
+            <span style="font-size: 12px; color: #8a8030">— 2026.03.31</span>
         </div>
     </div>
 </div>
 <div class="desk-front"></div>
+</div>
 
 <div id="yt-player-hidden" style="display:none;"></div>
 <script src="https://www.youtube.com/iframe_api"></script>
@@ -87,7 +155,7 @@
 <script src="/js/music/router.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        loadPlaylist(1);
+        loadPlaylist(1); // 나중에 → loadPlaylist(${loginUser.id}) 로 교체
     });
 </script>
 </body>
