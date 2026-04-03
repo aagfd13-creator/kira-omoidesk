@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-=======
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
->>>>>>> 0597105d634e547fc1cf63fa42f86df5b5d8c9ee
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,11 +12,9 @@
     <script src="js/diary.js"></script>
     <link rel="stylesheet" href="css/diary.css">
 </head>
-
 <body>
 <div class="desk-wrapper">
     <div class="desk-surface">
-
         <%-- ══ 왼쪽: 프로필 + 메뉴 + 색연필통 ══ --%>
         <div class="left-col">
             <div class="profile">
@@ -74,7 +67,7 @@
 
             <div class="nb-tabs">
                 <div class="nb-tab ${content eq 'main.jsp' or empty content ? 'active' : ''}"
-                     data-src="/main?ajax=true">홈
+                     data-src="/home-body?ajax=true">홈
                 </div>
                 <div class="nb-tab ${content eq 'diary/diary.jsp' ? 'active' : ''}"
                      data-src="/diary?ajax=true">다이어리
@@ -103,7 +96,10 @@
             <div class="mp3">
                 <div class="mp3-screen">
                     <div class="mp3-marquee">
-                        <span id="bgm-title" class="mp3-title-inner">
+                        <%--클릭하면 음악 상세페이지로 이동--%>
+                        <span id="bgm-title" class="mp3-title-inner"
+                              data-src="/bgm?ajax=true"
+                              style="cursor: pointer;">
                             ♪ Hype Boy - NewJeans &nbsp;&nbsp;&nbsp;&nbsp;
                             ♪ Attention - NewJeans
                         </span>
@@ -127,16 +123,22 @@
             <div class="smartphone">
                 <div class="phone-camera"></div>
                 <!-- 화면: YouTube iframe -->
-                <div class="phone-screen">
+                <div class="phone-screen"
+                     data-src="/bgm?ajax=true"
+                     style="cursor: pointer;">
                     <!-- YT IFrame API가 이 div를 iframe으로 교체 -->
-                    <div id="yt-player"></div>
+                    <div id="yt-player">
+                        <img src="https://pbs.twimg.com/media/Gew2zMua8AAJoOM.jpg">
+                    </div>
                     <!-- 유튜브 바로가기 링크 -->
                     <a id="yt-link" href="#" target="_blank" class="phone-yt-link">
                         ▶ YouTube에서 보기
                     </a>
                 </div>
-                <!-- 홈버튼 -->
-                <div class="phone-home"></div>
+                <!-- 홈버튼 누르면 음악 상세페이지로 이동 -->
+                <div class="phone-home"
+                     data-src="/bgm?ajax=true"
+                     style="cursor: pointer"></div>
             </div>
 
             <%-- 방문자 보기도 iframe 방식으로 --%>
