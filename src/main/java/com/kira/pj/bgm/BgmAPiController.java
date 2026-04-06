@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name = "BgmAPiController", value = "/api/bgm1")
+@WebServlet(name = "BgmAPiController", value = "/api/bgm")
 public class BgmAPiController extends HttpServlet {
 
 
