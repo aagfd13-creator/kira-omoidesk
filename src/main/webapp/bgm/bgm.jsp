@@ -35,5 +35,6 @@
 </div>
 
 <script src="<c:url value='/js/music/bgm.js' />"></script>
+
 </body>
 </html>
