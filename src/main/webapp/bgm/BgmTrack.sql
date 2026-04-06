@@ -1,18 +1,20 @@
 CREATE TABLE bgm_track (
-                           track_id    NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-                           title       VARCHAR2(200),
-                           youtube_id  VARCHAR2(20),   -- 유튜브 영상 ID만 저장 (URL 아님)
-                           duration    NUMBER,          -- 초 단위 (예: 3분7초 = 187)
-                           track_order NUMBER
+                           track_id    NUMBER PRIMARY KEY,
+                           title       VARCHAR2(50 char) NOT NULL,
+                           youtube_id  VARCHAR2(20 char)  NOT NULL,
+                           duration    NUMBER        DEFAULT 0,
+                           track_order NUMBER        DEFAULT 0,
+                           u_pk     VARCHAR2(15 char) NOT NULL
 );
 
--- 더미 데이터
-INSERT INTO bgm_track (title, youtube_id, duration, track_order)
-VALUES ('NeedygirlOverdose', 'BnkhBwzBqlQ', 222, 1);
+CREATE SEQUENCE bgm_track_seq START WITH 1 INCREMENT BY 1;
 
-INSERT INTO bgm_track (title, youtube_id, duration, track_order)
-VALUES ('Attention - NewJeans', 'b9PFMqKi7gg', 213, 2);
+INSERT INTO bgm_track VALUES (bgm_track_seq.NEXTVAL, 'Needygirl Overdose',       'BnkhBwzBqlQ', 214, 1, 'DongMin');
+INSERT INTO bgm_track VALUES (bgm_track_seq.NEXTVAL, '차가운 상어 아가씨',          'wZlv3qDPfjk', 155, 2, 'DongMin');
+INSERT INTO bgm_track VALUES (bgm_track_seq.NEXTVAL, '처형박수 (Execution Clap)', 'YcxhmHEykPg', 194, 3, 'DongMin');
+
+COMMIT;
 
 select * from bgm_track;
 
-COMMIT;
+drop table bgm_track;
