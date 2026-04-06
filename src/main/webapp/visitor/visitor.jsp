@@ -21,14 +21,17 @@
     </div>
 </div>
 
-<div id="vcustomModal" class="modal-overlay">
+<div id="customModal" class="modal-overlay">
     <div class="modal-content">
-        <div><h3>📢 알림 💌</h3>
-            <span class="class-modal" onclick="closcCustomAlert()">&</span>
-            <div>
-                <div></div>
-            </div>
+        <div class="modal-header">
+            <h3>📢 알림 💌</h3>
+            <span class="close-modal" onclick="closeCustomAlert()">&times;</span>
+        </div>
+        <div class="modal-body">
+            <p id="customAlertMessage">여기에 메시지가 들어갑니다.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="modal-btn" onclick="closeCustomAlert()">확인</button>
         </div>
     </div>
 </div>
-

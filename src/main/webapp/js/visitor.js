@@ -2,26 +2,29 @@
 let globalCurrentPage = 1;
 
 
+// 2. 방명록 작성 (POST 비동기) - 이벤트 위임 방식 사용
+document.addEventListener("submit", function (e) {
+    // 이벤트가 발생한 대상이 visitorForm일 때만 작동하도록 확인
+    if (e.target && e.target.id === "visitorForm") {
+        e.preventDefault(); // 기본 제출 방지
+        const nameInput = document.getElementById("visitorName");
 
-// 2. 방명록 작성 (POST 비동기)
-document.getElementById("visitorForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-    const nameInput = document.getElementById("visitorName");
-
-    fetch("visitor", {
-        method: "POST",
-        headers: {"Content-Type": "application/x-www-form-urlencoded"},
-        body: new URLSearchParams({visitorName: nameInput.value})
-    })
-        .then(response => {
-            if (response.ok) {
-                nameInput.value = "";
-                fetchVisitors(1);
-            } else {
-                alert("등록에 실패했습니다.");
-            }
+        fetch("visitor", {
+            method: "POST",
+            headers: {"Content-Type": "application/x-www-form-urlencoded"},
+            body: new URLSearchParams({visitorName: nameInput.value})
         })
-        .catch(error => console.error("Error:", error));
+            .then(response => {
+                if (response.ok) {
+                    nameInput.value = "";
+                    fetchVisitors(1);
+                    loadRecentVisitors(); // ⭐️ 작성 성공 시 우측 위젯도 새로고침!
+                } else {
+                    alert("등록에 실패했습니다.");
+                }
+            })
+            .catch(error => console.error("Error:", error));
+    }
 });
 
 // 3. 방명록 목록 불러오기 (GET 비동기)
@@ -120,6 +123,7 @@ function renderPaging(visitorList, currentPage) {
 
     container.innerHTML = html;
 }
+
 // 🌊 파도타기 (타인의 미니홈피로 이동) 함수
 function goToMinihome(targetId) {
     // 상대방의 PK(targetId)가 잘 넘어오는지 확인
@@ -134,4 +138,41 @@ function goToMinihome(targetId) {
 
     // 방법 2. 현재 창 안에서 전체 껍데기를 그 사람의 데이터로 갈아끼우기
     // location.href = `/main?id=${targetId}`;
+}
+
+// 🛠 커스텀 알림창을 띄우는 함수
+function customAlert(message) {
+    // 1. 메시지 내용 집어넣기
+    document.getElementById('customAlertMessage').innerText = message;
+    // 2. 모달창 보이게 하기 (flex로 설정해서 중앙 정렬)
+    document.getElementById('customModal').style.display = 'flex';
+}
+
+// 🛠 커스텀 알림창을 닫는 함수
+function closeCustomAlert() {
+    document.getElementById('customModal').style.display = 'none';
+}
+
+function loadRecentVisitors() {
+    fetch('/visitor?reqType=recent')
+        .then(response => response.json())
+        .then(data => {
+            const listContainer = document.getElementById('v-recent-list');
+            listContainer.innerHTML = ""; // 초기화
+
+            if (data.length === 0) {
+                listContainer.innerHTML = "<li class='v-empty'>아직 다녀간 사람이 없어요.</li>";
+                return;
+            }
+
+            data.forEach(v => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <strong onclick="goToMinihome('${v.v_writer_id}')">${v.v_writer_id}</strong>
+                    <span class="v-date-small">${v.v_date}</span>
+                `;
+                listContainer.appendChild(li);
+            });
+        })
+        .catch(err => console.error("최근 방문자 로딩 실패:", err));
 }

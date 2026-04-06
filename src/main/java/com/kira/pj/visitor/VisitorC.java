@@ -24,7 +24,7 @@ public class VisitorC extends HttpServlet {
         int p = (pStr == null) ? 1 : Integer.parseInt(pStr);
 
         if ("json".equals(reqType)) {
-            // [1] 방명록 화면 안에서 JS(fetch)가 데이터만 요청할 때 -> JSON 반환
+            // [1] 방명록 화면 안에서 JS(fetch)가 방명록 리스트를 요청할 때
             VisitorDAO dao = new VisitorDAO();
             List<VisitorDTO> list = dao.getVisitorsByPage("DongMin", p);
 
@@ -38,8 +38,17 @@ public class VisitorC extends HttpServlet {
             response.setContentType("application/json; charset=UTF-8");
             response.getWriter().print(jsonResponse);
 
+        } else if ("recent".equals(reqType)) {
+            // 🚨 [여기가 추가된 부분!] 최근 방문자 5명 위젯에서 데이터를 요청할 때
+            VisitorDAO dao = new VisitorDAO();
+            List<VisitorDTO> recentList = dao.getRecentVisitors("DongMin"); // DB 주인 ID 확인!
+
+            Gson gson = new Gson();
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().print(gson.toJson(recentList));
+
         } else if ("true".equals(ajax)) {
-            // [2] 방명록 탭 메뉴를 클릭했을 때 -> HTML 알맹이(visitor.jsp) 반환 (원상복구)
+            // [2] 방명록 탭 메뉴를 클릭했을 때 -> HTML 알맹이(visitor.jsp) 반환
             request.getRequestDispatcher("visitor/visitor.jsp").forward(request, response);
 
         } else {
@@ -48,7 +57,6 @@ public class VisitorC extends HttpServlet {
             request.getRequestDispatcher("index.jsp").forward(request, response);
         }
     }
-
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
