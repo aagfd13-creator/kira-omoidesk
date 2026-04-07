@@ -120,8 +120,14 @@ const pageRoutes = {
 function loadPage(url) {
   if (!url) return;
 
-  return fetch(url)
-    .then((response) => response.text())
+  fetch(url)
+    .then((response) => {
+        // 🔥 이게 핵심 (404, 500 잡기)
+        if (!response.ok) {
+            throw new Error(`HTTP 오류: ${response.status}`);
+        }
+        return response.text();
+    })
     .then((htmlData) => {
       // 1. 도화지에 가져온 HTML 껍데기 넣기
       document.getElementById("notebook-content").innerHTML = htmlData;
@@ -130,32 +136,35 @@ function loadPage(url) {
       const notebook = document.getElementById("notebook");
       notebook.classList.remove("is-visitor");
 
-      // 3. 페이지 이름(url)이랑 똑같은 설정을 찾아서 실행하기 (O(1) 속도!)
-      const route = pageRoutes[url];
+        // 3. 라우터 실행
+        for (const path in pageRoutes) {
+            if (url.includes(path)) {
+                const route = pageRoutes[path];
 
-      if (route) {
-        // 해당 페이지 전용 CSS가 있다면 붙여주기
-        if (route.cssClass) {
-          notebook.classList.add(route.cssClass);
+                if (route.cssClass) {
+                    notebook.classList.add(route.cssClass);
+                }
+
+                if (route.initFunc) {
+                    route.initFunc();
+                }
+
+                break;
+            }
         }
-        // 해당 페이지 전용 초기화 JS 함수가 있다면 실행하기
-        if (route.initFunc) {
-          route.initFunc();
-        }
-      }
     })
-    .catch((error) => {
-      console.error("페이지 로드 실패:", error);
+      .catch(error => {
+          console.error("페이지 로드 실패:", error);
 
-      // 🔥 여기서 nb-error UI 띄우기
-      document.getElementById("notebook-content").innerHTML = `
+          // 🔥 여기서 nb-error UI 띄우기
+          document.getElementById('notebook-content').innerHTML = `
                 <div class="nb-error">
                     😢 페이지를 불러올 수 없어요
                     <br>
                     <button onclick="loadPage('${url}')">다시 시도</button>
                 </div>
             `;
-    });
+      });
 }
 
 function goSearchMain(id, nick) {
