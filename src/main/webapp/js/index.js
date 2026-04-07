@@ -109,7 +109,13 @@ function loadPage(url) {
     if (!url) return;
 
     fetch(url)
-        .then(response => response.text())
+        .then(response => {
+          // 404, 500에러 잡기
+          if (!response.ok) {
+              throw new Error(`HTTP 오류: ${response.status}`);
+          }
+          return response.text();
+        })
         .then(htmlData => {
 
             // 1. HTML 교체
@@ -136,5 +142,16 @@ function loadPage(url) {
                 }
             }
         })
-        .catch(error => console.error("페이지 로드 실패:", error));
+        .catch(error => {
+            console.error("페이지 로드 실패:", error);
+
+            // 🔥 여기서 nb-error UI 띄우기
+            document.getElementById('notebook-content').innerHTML = `
+                <div class="nb-error">
+                    😢 페이지를 불러올 수 없어요
+                    <br>
+                    <button onclick="loadPage('${url}')">다시 시도</button>
+                </div>
+            `;
+        });
 }
