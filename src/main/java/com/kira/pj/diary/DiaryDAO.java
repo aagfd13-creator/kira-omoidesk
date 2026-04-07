@@ -3,6 +3,7 @@ package com.kira.pj.diary;
 import com.kira.pj.main.DBManager;
 
 import com.google.gson.Gson;
+
 import java.util.Map;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -16,10 +17,12 @@ public class DiaryDAO {
 
     public static final DiaryDAO DDAO = new DiaryDAO();
     public Connection con = null;
+
     private DiaryDAO() {
 
     }
-    private  ArrayList<DiaryDTO> diaries;
+
+    private ArrayList<DiaryDTO> diaries;
 
     public void getCalendar(HttpServletRequest req) {
 
@@ -81,7 +84,7 @@ public class DiaryDAO {
                 String formattedDay = String.format("%02d", Integer.parseInt(d));
                 String fullDate = curYear + "-" + formattedMonth + "-" + formattedDay;
 
-                // TO_CHAR를 써서 해당 날짜에 쓴 일기만 최신순(d_no DESC)으로 가져옵니다!
+                // TO_CHAR를 써서 해당 날짜에 쓴 일기만 최신순(d_no DESC)으로 가져옴
                 String sql = "SELECT * FROM diary_test WHERE TO_CHAR(d_date, 'YYYY-MM-DD') = ? ORDER BY d_no DESC";
                 pstmt = con.prepareStatement(sql);
                 pstmt.setString(1, fullDate);
@@ -89,9 +92,9 @@ public class DiaryDAO {
 
                 while (rs.next()) {
                     DiaryDTO dto = new DiaryDTO();
-                    dto.setD_no(rs.getInt("d_no"));
-                    dto.setD_title(rs.getString("d_title"));
-                    dto.setD_txt(rs.getString("d_txt"));
+                    dto.setNo(rs.getInt("d_no"));
+                    dto.setTitle(rs.getString("d_title"));
+                    dto.setTxt(rs.getString("d_txt"));
                     posts.add(dto);
                 }
             } catch (Exception e) {
@@ -99,14 +102,12 @@ public class DiaryDAO {
             } finally {
                 DBManager.close(con, pstmt, rs);
             }
-
-            // 완성된 진짜 일기 리스트를 바구니에 담아서 JSP로 보냄!
             req.setAttribute("posts", posts);
-
         } else {
             req.setAttribute("showMode", "calendar");
         }
     }
+
     // 전체조회
     public void selectAllDiary(HttpServletRequest req) {
         Connection con = null;
@@ -124,16 +125,16 @@ public class DiaryDAO {
 
             while (rs.next()) {
                 DiaryDTO dto = new DiaryDTO();
-                dto.setD_no(rs.getInt("d_no"));
-                dto.setD_id(rs.getString("d_id"));
+                dto.setNo(rs.getInt("d_no"));
+                dto.setId(rs.getString("d_id"));
 
                 // ★ 핵심: DB에서 원본 DATE를 꺼낸 다음, 자바가 문자열로 예쁘게 바꿈!
                 java.sql.Date dbDate = rs.getDate("d_date");
                 String formattedDate = sdf.format(dbDate);
                 dto.setD_date(formattedDate); // DTO에는 String으로 쏙 들어감
 
-                dto.setD_title(rs.getString("d_title"));
-                dto.setD_txt(rs.getString("d_txt"));
+                dto.setTitle(rs.getString("d_title"));
+                dto.setTxt(rs.getString("d_txt"));
 
                 diaries.add(dto);
             }
@@ -148,49 +149,49 @@ public class DiaryDAO {
         }
     }
 
-        // 일기 등록 기능 (Create)
-        public void insertDiary(HttpServletRequest req) {
-            Connection con = null;
-            PreparedStatement pstmt = null;
+    // 일기 등록 기능 (Create)
+    public void insertDiary(HttpServletRequest req) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
 
-            try {
-                con = DBManager.connect();
-                String sql = "INSERT INTO diary_test VALUES (diary_test_seq.nextval, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, SYSDATE)";
-                pstmt = con.prepareStatement(sql);
+        try {
+            con = DBManager.connect();
+            String sql = "INSERT INTO diary_test VALUES (diary_test_seq.nextval, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, SYSDATE)";
+            pstmt = con.prepareStatement(sql);
 
-                // 일반 파라미터로 데이터 쏙쏙 꺼내기
-                String year = req.getParameter("d_year");
-                String month = req.getParameter("d_month");
-                String date = req.getParameter("d_date");
-                String title = req.getParameter("d_title");
-                String txt = req.getParameter("d_txt");
+            // 일반 파라미터로 데이터 쏙쏙 꺼내기
+            String year = req.getParameter("d_year");
+            String month = req.getParameter("d_month");
+            String date = req.getParameter("d_date");
+            String title = req.getParameter("d_title");
+            String txt = req.getParameter("d_txt");
 
-                String id = "pass02"; // 임시 아이디
+            String id = "pass02"; // 임시 아이디
 
-                // 날짜 예쁘게 합치기
-                String formattedMonth = String.format("%02d", Integer.parseInt(month));
-                String formattedDay = String.format("%02d", Integer.parseInt(date));
-                String fullDate = year + "-" + formattedMonth + "-" + formattedDay;
+            // 날짜 예쁘게 합치기
+            String formattedMonth = String.format("%02d", Integer.parseInt(month));
+            String formattedDay = String.format("%02d", Integer.parseInt(date));
+            String fullDate = year + "-" + formattedMonth + "-" + formattedDay;
 
-                pstmt.setString(1, id);
-                pstmt.setString(2, fullDate);
-                pstmt.setString(3, title);
-                pstmt.setString(4, txt);
+            pstmt.setString(1, id);
+            pstmt.setString(2, fullDate);
+            pstmt.setString(3, title);
+            pstmt.setString(4, txt);
 
-                if (pstmt.executeUpdate() == 1) {
-                    System.out.println("일기 등록 완벽 성공! ദ്ദി(⩌ᴗ⩌ )");
-                }
-
-            } catch (Exception e) {
-                System.out.println("일기 등록 실패 ㅠㅠ");
-                e.printStackTrace();
-            } finally {
-                DBManager.close(con, pstmt, null);
+            if (pstmt.executeUpdate() == 1) {
+                System.out.println("일기 등록 완벽 성공! ദ്ദി(⩌ᴗ⩌ )");
             }
 
-
+        } catch (Exception e) {
+            System.out.println("일기 등록 실패 ㅠㅠ");
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
         }
+
+
     }
+}
 
 
 
