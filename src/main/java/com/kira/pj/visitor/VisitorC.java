@@ -1,6 +1,7 @@
 package com.kira.pj.visitor;
 
 import com.google.gson.Gson;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,64 +19,93 @@ public class VisitorC extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String ajax = request.getParameter("ajax");       // 기존: 탭 메뉴 이동용
-        String reqType = request.getParameter("reqType"); // 신규: JSON 데이터 요청용
+        String ajax = request.getParameter("ajax");
+        String reqType = request.getParameter("reqType");
         String pStr = request.getParameter("p");
         int p = (pStr == null) ? 1 : Integer.parseInt(pStr);
 
+        // TODO: 향후 단일 서비스가 아닌 다중 회원 서비스로 확장할 경우,
+        // 하드코딩된 "DongMin"을 request.getParameter("ownerId") 등으로 받아와야 합니다.
+        String ownerId = "DongMin";
+
         if ("json".equals(reqType)) {
-            // [1] 방명록 화면 안에서 JS(fetch)가 방명록 리스트를 요청할 때
             VisitorDAO dao = new VisitorDAO();
-            List<VisitorDTO> list = dao.getVisitorsByPage("DongMin", p);
+            List<VisitorDTO> list = dao.getVisitorsByPage(ownerId, p);
 
             Map<String, Object> resultMap = new HashMap<>();
             resultMap.put("visitorList", list);
             resultMap.put("currentPage", p);
 
             Gson gson = new Gson();
-            String jsonResponse = gson.toJson(resultMap);
-
             response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().print(jsonResponse);
+            response.getWriter().print(gson.toJson(resultMap));
 
         } else if ("recent".equals(reqType)) {
-            // 🚨 [여기가 추가된 부분!] 최근 방문자 5명 위젯에서 데이터를 요청할 때
             VisitorDAO dao = new VisitorDAO();
-            List<VisitorDTO> recentList = dao.getRecentVisitors("DongMin"); // DB 주인 ID 확인!
+            List<VisitorDTO> recentList = dao.getRecentVisitors(ownerId);
 
             Gson gson = new Gson();
             response.setContentType("application/json; charset=UTF-8");
             response.getWriter().print(gson.toJson(recentList));
 
         } else if ("true".equals(ajax)) {
-            // [2] 방명록 탭 메뉴를 클릭했을 때 -> HTML 알맹이(visitor.jsp) 반환
             request.getRequestDispatcher("visitor/visitor.jsp").forward(request, response);
 
         } else {
-            // [3] 브라우저 주소창에 직접 쳐서 들어왔을 때 -> 전체 페이지(index.jsp) 반환
             request.setAttribute("content", "visitor/visitor.jsp");
             request.getRequestDispatcher("index.jsp").forward(request, response);
         }
     }
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        // 기존 작성하신 비동기 POST 코드 그대로 유지! (수정 없음)
+
         request.setCharacterEncoding("UTF-8");
+
+        // 1. 프론트엔드에서 URLSearchParams로 보낸 데이터 추출
         String visitorName = request.getParameter("visitorName");
+        String visitorEmojiStr = request.getParameter("visitorEmoji");
+        String ownerId = request.getParameter("ownerId");
 
-        if (visitorName != null && !visitorName.trim().isEmpty()) {
-            VisitorDTO dto = new VisitorDTO();
-            dto.setV_writer_id(visitorName);
-            dto.setV_owner_id("DongMin");
-            dto.setV_emoji((int) (Math.random() * 5) + 1);
+        // 2. 파라미터 누락 방지 (유효성 검증)
+        if (visitorName != null && !visitorName.trim().isEmpty() &&
+                visitorEmojiStr != null && ownerId != null) {
 
-            VisitorDAO dao = new VisitorDAO();
-            dao.insertVisitor(dto);
+            try {
+                // 3. String으로 넘어온 이모지 값을 int로 형변환
+                int emojiInt = Integer.parseInt(visitorEmojiStr);
 
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.getWriter().print("success");
+                VisitorDTO dto = new VisitorDTO();
+                dto.setV_writer_id(visitorName.trim());
+                dto.setV_owner_id(ownerId);
+                dto.setV_emoji(emojiInt);
+
+                VisitorDAO dao = new VisitorDAO();
+
+                // 4. 기존 insertVisitor가 아닌 upsertVisitor 호출
+                int result = dao.upsertVisitor(dto);
+
+                // 5. DB 반영 결과에 따른 응답 분기
+                if (result > 0) {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.getWriter().print("success");
+                } else {
+                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                }
+
+            } catch (NumberFormatException e) {
+                // 이모지 값이 숫자가 아닌 문자로 넘어왔을 때의 예외 처리
+                System.err.println("이모지 파라미터 변환 오류: " + e.getMessage());
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
+            } catch (Exception e) {
+                // DB 연결 실패 또는 MERGE INTO 구문 에러 시 클라이언트에 서버 에러 반환
+                System.err.println("방명록 Upsert DB 처리 중 오류: " + e.getMessage());
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
         } else {
+            // 필수 파라미터가 비어있을 때
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
     }
