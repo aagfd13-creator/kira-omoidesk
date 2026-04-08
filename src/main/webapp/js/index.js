@@ -138,7 +138,7 @@ function goSearchMain(id, nick) {
             if (titleElement) titleElement.innerText = `📖 ${searchData.hompy_title}`;
 
             const stElement = document.querySelector("#status-text");
-            if (stElement) stElement.innerHTML = searchData.st_message;
+            if (stElement) stElement.innerHTML = `${searchData.st_message}`;
 
             const stDate = document.querySelector(".status-since");
             if (stDate && searchData.st_date) {
