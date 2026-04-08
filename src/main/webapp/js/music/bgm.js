@@ -19,6 +19,32 @@ function updateNowPlaying(track, index) {
     });
 }
 
+function renderQueueHeader() {
+    const header = document.getElementById('bgm-queue-header');
+    const wrap = document.querySelector('.bgm-wrap');
+    if (!header) return;
+
+    if (window.isDefaultPlaylist) {
+        wrap.classList.remove('theme-personal');
+        wrap.classList.add('theme-default');
+        header.innerHTML = `
+            <div class="bgm-queue-status default">
+                <span class="bgm-queue-status-label">🎵 기본 BGM</span>
+                <span class="bgm-queue-hint">나만의 재생목록을 만들어봐요</span>
+            </div>
+        `;
+    } else {
+        wrap.classList.remove('theme-default');
+        wrap.classList.add('theme-personal');
+        header.innerHTML = `
+            <div class="bgm-queue-status personal">
+                <span class="bgm-queue-status-label">🎶 내 재생목록</span>
+                <span class="bgm-queue-count">${window.playlist.length}곡</span>
+            </div>
+        `;
+    }
+}
+
 function renderQueue() {
     // ✅ 같은 window이므로 직접 접근
     // playlist 준비 안 됐으면 재시도
@@ -31,6 +57,7 @@ function renderQueue() {
     if (!container) return;
 
     container.innerHTML = '';
+    renderQueueHeader();
     window.playlist.forEach((track, i) => {
         const item = document.createElement('div');
         item.className = 'bgm-track-item' + (i === window.currentIndex ? ' active' : '');

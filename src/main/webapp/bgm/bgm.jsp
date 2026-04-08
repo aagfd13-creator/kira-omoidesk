@@ -39,6 +39,8 @@
     </div>
 
     <%-- ── 재생목록 ── --%>
+    <div id="bgm-queue-header" class="bgm-queue-header"></div>
+
     <div id="bgm-queue-list"></div>
 
     <%-- ── 곡 추가 모달 ── --%>
