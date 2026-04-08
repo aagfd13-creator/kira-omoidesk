@@ -1,6 +1,7 @@
 package com.kira.pj.diary;
 
 import com.kira.pj.main.DBManager;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -158,7 +159,15 @@ public class DiaryDAO {
             String txt = req.getParameter("d_txt");
             String visibility = req.getParameter("d_visibility"); // 👈 화면에서 보낸 설정값!
 
-            String id = "pass02"; // 임시 아이디
+            // ★ 임시 아이디 대신, 세션에서 진짜 로그인한 아이디를 꺼내옵니다! ★
+            javax.servlet.http.HttpSession session = req.getSession();
+            String id = (String) session.getAttribute("loginUserId");
+
+            // 혹시 로그인이 풀렸는데 글을 쓰려고 하면 튕겨내는 안전장치!
+            if (id == null) {
+                System.out.println("로그인이 안 되어 있습니다!");
+                return; // 그냥 메서드 종료
+            }
 
             // 날짜 합치기
             String formattedMonth = String.format("%02d", Integer.parseInt(month));
