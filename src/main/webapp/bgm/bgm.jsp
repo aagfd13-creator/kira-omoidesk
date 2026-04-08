@@ -31,7 +31,8 @@
 
     <%-- ── 곡 추가 버튼 영역 ── --%>
     <div class="bgm-add-row">
-        <span class="bgm-queue-label">재생목록</span>
+        <div id="bgm-queue-header" class="bgm-queue-header"></div>
+<%--        <span class="bgm-queue-label">재생목록</span>--%>
         <br>
         <button class="bgm-add-btn" id="bgm-add-btn" title="곡 추가">
             ＋ 곡 추가
@@ -39,8 +40,6 @@
     </div>
 
     <%-- ── 재생목록 ── --%>
-    <div id="bgm-queue-header" class="bgm-queue-header"></div>
-
     <div id="bgm-queue-list"></div>
 
     <%-- ── 곡 추가 모달 ── --%>
