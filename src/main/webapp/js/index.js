@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (savedId && savedNick) {
     goSearchMain(savedId, savedNick);
   } else {
-    loadPage("main.jsp");
+    loadPage("/home?ajax=true");
   }
 
   // 메뉴/탭 버튼 클릭 이벤트 등록
@@ -176,6 +176,7 @@ function goSearchMain(id, nick) {
   sessionStorage.setItem("currentHostId", id);
   sessionStorage.setItem("currentHostNick", nick);
 
+    loadPage(`/home?ajax=true&host_id=${id}`);
   const searchUrl = `/search-main?host_id=${id}`;
   fetch(searchUrl)
     .then((response) => response.json())

@@ -32,4 +32,28 @@ public class HomeDAO {
 
 
     }
+
+    public static void editStMessage(HttpServletRequest request, HttpServletResponse response) {
+
+        Connection con = null;
+        PreparedStatement ps = null;
+        String host_id  = request.getParameter("host_id");
+        String editStM = request.getParameter("editStM");
+        String sql = "update main_test set st_message = ? where host_id = ?";
+        try{
+            con = DBManager.connect();
+            ps = con.prepareStatement(sql);
+            ps.setString(1,editStM);
+            ps.setString(2,host_id);
+            if(ps.executeUpdate() == 1) {
+                System.out.println("상태 메세지 수정 성공");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }finally {
+            DBManager.close(con,ps,null);
+        }
+
+
+    }
 }

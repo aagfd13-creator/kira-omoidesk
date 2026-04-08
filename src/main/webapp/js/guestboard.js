@@ -1,6 +1,7 @@
 // 방명록 데이터 불러오기 함수
 function loadGuestBoard(date = "") {
-    const gbUrl = date ? `/board?date=${date}` : `/board`;
+    let currentHostId = sessionStorage.getItem("currentHostId");
+    const gbUrl = date ? `/board?date=${date}&host_id=${currentHostId}` : `/board?host_id=${currentHostId}`;
 
     fetch(gbUrl)
         .then(response => response.json())
@@ -53,7 +54,7 @@ function initFlatpickr(defaultDate) {
 }
 
 
-// ✅ 이벤트 위임 방식으로 변경! (document 전체를 감시합니다)
+
 document.addEventListener("submit", function (e) {
     // 폼이 제출되었을 때, 그 폼의 클래스가 'gb-write-form'이 맞는지 확인합니다.
     //다른 페이지에서 무언가 제출이 일어났을 때 이 함수 사용을 막기위한 장치!
@@ -75,7 +76,8 @@ document.addEventListener("submit", function (e) {
         }
         console.log("4. 서버로 fetch 요청 출발합니다!");
 
-        fetch('/board', {
+        let currentHostId = sessionStorage.getItem("currentHostId");
+        fetch(`/board?host_id=${currentHostId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
