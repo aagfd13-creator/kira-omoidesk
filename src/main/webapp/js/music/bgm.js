@@ -106,30 +106,28 @@ function renderQueue() {
 }
 
 // ✅ 추가: 삭제 요청 함수
-function deleteTrack(youtubeId, itemEl, index) {
-    fetch('api/bgm?youtubeId=' + encodeURIComponent(youtubeId), {
-        method: 'DELETE'
-    })
-        .then(r => r.json())
-        .then(res => {
-            if (res.result === 'ok') {
-                // playlist에서 해당 곡 제거
-                window.playlist.splice(index, 1);
+// 기존의 deleteTrack 함수를 아래 내용으로 덮어씌우세요.
+async function deleteTrack(youtubeId) {
+    if (!confirm('정말 삭제할까요?')) return;
 
-                // 삭제한 곡이 현재 재생 중이거나 그 앞이면 인덱스 보정
-                if (window.currentIndex >= window.playlist.length) {
-                    window.currentIndex = Math.max(0, window.playlist.length - 1);
-                }
+    try {
+        // 서버에 삭제 요청 (DAO에서 삭제 + 재정렬이 일어남)
+        const res = await fetch(`/api/bgm?youtubeId=${youtubeId}`, {
+            method: 'DELETE'
+        });
+        const json = await res.json();
 
-                // fadeOut 후 리렌더링
-                itemEl.style.transition = 'opacity 0.2s';
-                itemEl.style.opacity = '0';
-                setTimeout(renderQueue, 200);
-            } else {
-                alert(res.msg || '삭제에 실패했습니다.');
-            }
-        })
-        .catch(err => console.error('삭제 실패:', err));
+        if (json.result === 'ok') {
+            // ✅ 핵심: 서버에서 1, 2, 3...으로 재정렬된 목록을 새로 받아옴
+            // 이렇게 해야 '2번'을 지웠을 때 '3번'이었던 곡이 '2번'으로 UI에 그려집니다.
+            await reloadPlaylist();
+        } else {
+            alert(json.msg || '삭제에 실패했습니다.');
+        }
+    } catch (e) {
+        console.error("삭제 중 에러 발생:", e);
+        alert('서버와 통신 중 오류가 발생했습니다.');
+    }
 }
 
 // ✅ player.js가 곡을 바꿀 때 호출하는 콜백
@@ -167,102 +165,98 @@ document.getElementById('bgm-add-modal')
 
 // ── YouTube URL → ID 추출 ───────────────────────
 function extractYoutubeId(url) {
-    const patterns = [
-        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([A-Za-z0-9_-]{11})/,
-        /youtube\.com\/shorts\/([A-Za-z0-9_-]{11})/
-    ];
-    for (const p of patterns) {
-        const m = url.match(p);
-        if (m) return m[1];
+    // 다양한 유튜브 URL 패턴을 처리하는 정규식
+    const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?v=)|(shorts\/))([^#\&\?]*).*/;
+    const match = url.match(regExp);
+
+    if (match && match[8].length === 11) {
+        return match[8]; // 정확히 11자리 ID만 반환
+    } else {
+        // 정규식으로 안 잡히는 특수 케이스 대비
+        try {
+            const urlObj = new URL(url);
+            if (urlObj.hostname === 'youtu.be') return urlObj.pathname.substring(1);
+            return urlObj.searchParams.get("v");
+        } catch (e) {
+            return false;
+        }
     }
-    return null;
 }
 
 // ── 미리보기 ────────────────────────────────────
 async function bgmPreview() {
-    const url = document.getElementById('bgm-add-url').value.trim();
-    const msg = document.getElementById('bgm-add-msg');
-    const preview = document.getElementById('bgm-add-preview');
+    const urlInput = document.getElementById('bgm-add-url');
+    const ytId = extractYoutubeId(urlInput.value.trim());
 
-    const ytId = extractYoutubeId(url);
     if (!ytId) {
-        showAddMsg('올바른 YouTube URL을 입력해주세요.', 'error');
-        preview.style.display = 'none';
+        showAddMsg('올바른 유튜브 주소가 아닙니다.', 'error');
         return;
     }
 
-    showAddMsg('정보를 불러오는 중...', 'info');
-
     try {
-        // oEmbed로 제목 가져오기
-        const res = await fetch(
-            `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`
-        );
-        if (!res.ok) throw new Error('조회 실패');
+        // oEmbed 호출 시 ID 뒤에 붙은 불필요한 파라미터가 없는지 확인
+        const res = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${ytId}&format=json`);
         const data = await res.json();
 
-        document.getElementById('bgm-preview-thumb').src =
-            `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+        // 썸네일 및 제목 표시
+        document.getElementById('bgm-preview-thumb').src = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
         document.getElementById('bgm-preview-title').textContent = data.title;
 
-        // 미리보기 성공 시 재생시간 입력 필드 노출
+        // ✅ [시간 자동 입력 로직]
+        // oEmbed는 정확한 초 단위 길이를 주지 않는 경우가 많으므로,
+        // 기본값을 '1분 0초'로 세팅하거나 그냥 비워두지 않고 1을 채워줍니다.
+        document.getElementById('bgm-input-min').value = 1;
+        document.getElementById('bgm-input-sec').value = 0;
+
         document.getElementById('bgm-duration-input-row').style.display = 'flex';
         document.getElementById('bgm-add-preview').style.display = 'flex';
         document.getElementById('bgm-confirm-btn').style.display = 'inline-block';
 
-        window._previewData = { youtubeId: ytId, title: data.title, duration: 0 };
-
-        preview.style.display = 'flex';
-        document.getElementById('bgm-confirm-btn').style.display = 'inline-block';
-        msg.style.display = 'none';
-
+        window._previewData = { youtubeId: ytId, title: data.title };
     } catch (e) {
-        showAddMsg('정보를 불러올 수 없어요. URL을 확인해주세요.', 'error');
+        console.error("미리보기 에러 상세:", e);
+        showAddMsg('유튜브에서 영상 정보를 가져오지 못했습니다.', 'error');
     }
 }
 
 // ── 추가 확정 → POST /api/bgm ───────────────────
+// 2. 곡 추가 확정 함수 수정 (URLSearchParams 사용으로 특수문자 방어)
 async function bgmConfirmAdd() {
-    const min = parseInt(document.getElementById('bgm-input-min').value || 0);
-    const sec = parseInt(document.getElementById('bgm-input-sec').value || 0);
-    const totalDuration = (min * 60) + sec;
+    const minVal = document.getElementById('bgm-input-min').value;
+    const secVal = document.getElementById('bgm-input-sec').value;
 
-    if (totalDuration <= 0) {
-        alert("재생 시간을 입력해주세요.");
-        return;
-    }
+    // 값이 없으면 분은 1, 초는 0으로 처리 (기본값 60초)
+    const min = parseInt(minVal || 1);
+    const sec = parseInt(secVal || 0);
+    const totalDuration = (min * 60) + sec;
 
     if (!window._previewData) return;
 
-    const { youtubeId, title, duration } = window._previewData;
-    showAddMsg('추가하는 중...', 'info');
+    // ✅ 안전한 전송을 위해 URLSearchParams 객체 생성
+    const params = new URLSearchParams();
+    params.append('youtubeId', window._previewData.youtubeId);
+    params.append('title', window._previewData.title);
+    params.append('duration', totalDuration);
 
     try {
-        const params = new URLSearchParams({
-            youtubeId: youtubeId,
-            title: title,
-            duration: totalDuration
-        });
-
         const res = await fetch('/api/bgm', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: params
+            body: params.toString() // 자동으로 인코딩되어 전송됨
         });
         const json = await res.json();
-
         if (json.result === 'ok') {
             closeBgmModal();
-            // 재생목록 새로고침
+            // ✅ 추가 후 목록을 다시 불러와서 새 곡을 포함한 정렬된 리스트 표시
             await reloadPlaylist();
         } else {
             showAddMsg(json.msg || '추가에 실패했어요.', 'error');
         }
     } catch (e) {
+        console.error("추가 에러:", e);
         showAddMsg('서버 오류가 발생했어요.', 'error');
     }
 }
-
 // ── 재생목록 리로드 부분 수정 (wasDefault 정의) ─────────────
 async function reloadPlaylist() {
     const wasDefault = window.isDefaultPlaylist; // 현재 상태 저장
