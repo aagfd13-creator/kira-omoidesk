@@ -264,6 +264,37 @@ public class DiaryDAO {
             DBManager.close(con, pstmt, null);
         }
     }
+
+    public void updateDiary(HttpServletRequest request) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = DBManager.connect();
+
+            // 폼에서 넘어온 고유 번호, 수정된 제목, 내용 받기
+            String no = request.getParameter("no");
+            String title = request.getParameter("d_title");
+            String txt = request.getParameter("d_txt");
+
+            // 글 번호(d_no)가 일치하는 녀석의 제목과 내용을 덮어씌워라!
+            String sql = "UPDATE diary_test SET d_title = ?, d_txt = ? WHERE d_no = ?";
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, title);
+            pstmt.setString(2, txt);
+            pstmt.setInt(3, Integer.parseInt(no));
+
+            if (pstmt.executeUpdate() == 1) {
+                System.out.println("일기 수정 완벽 성공! ✍️");
+            }
+
+        } catch (Exception e) {
+            System.out.println("일기 수정 실패 ㅠㅠ");
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
+    }
 }
 
 

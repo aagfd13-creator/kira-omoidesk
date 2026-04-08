@@ -27,7 +27,37 @@
             </div>
         </c:when>
 
-        <%-- [2] 상세 보기 모드 화면 --%>
+        <%-- ★ [2] 수정 모드 화면 (새로 추가됨!) ★ --%>
+        <c:when test="${showMode == 'update'}">
+            <div class="diary-board">
+                <div class="board-header">
+                    <h3>📝 일기 수정하기</h3>
+                        <%-- 취소를 누르면 다시 원래 보던 '상세 보기' 화면으로 돌아갑니다 --%>
+                    <button onclick="loadDiary('diary-detail?no=${diary.no}&y=${curYear}&m=${curMonth}&d=${selectedDay}')" class="write-btn">취소</button>
+                </div>
+
+                <form id="diaryUpdateForm" style="display: flex; flex-direction: column; gap: 15px;">
+                        <%-- 어떤 글을 수정할지 알아야 하니까 글 번호(no)를 숨겨둡니다 --%>
+                    <input type="hidden" name="no" value="${diary.no}">
+                    <input type="hidden" name="d_year" value="${curYear}">
+                    <input type="hidden" name="d_month" value="${curMonth}">
+                    <input type="hidden" name="d_date" value="${selectedDay}">
+
+                        <%-- 기존 제목이 미리 적혀있게 value 속성 추가 --%>
+                    <input name="d_title" value="${diary.title}" placeholder="제목을 입력하세요" style="width:100%; padding:15px; border:none; border-bottom:2px solid #f7cfcd; font-family:'Gaegu'; font-size:22px; outline:none; box-sizing: border-box;">
+
+                        <%-- 기존 내용이 미리 적혀있게 태그 사이에 내용 추가 --%>
+                    <textarea name="d_txt" placeholder="내용을 입력하세요..." style="width:100%; height:250px; border:none; padding:15px; font-family:'Gaegu'; font-size:20px; outline:none; resize:none; box-sizing: border-box;">${diary.txt}</textarea>
+
+                    <div style="text-align:right;">
+                            <%-- 자바스크립트의 수정 전용 함수(updateDiaryForm) 실행! --%>
+                        <button type="button" class="write-btn" onclick="updateDiaryForm()">수정완료</button>
+                    </div>
+                </form>
+            </div>
+        </c:when>
+
+        <%-- [3] 상세 보기 모드 화면 --%>
         <c:when test="${showMode == 'detail'}">
             <div class="diary-board">
                 <div class="board-header">
@@ -42,14 +72,15 @@
                     <div style="font-size:18px; color:#555; line-height:1.8; min-height:200px; white-space: pre-wrap;">${diary.txt}</div>
 
                     <div style="text-align:right; margin-top:20px;">
-                        <button class="write-btn" style="background:#ddd; color:#333;">수정</button>
+                            <%-- ★ 진짜 수정 컨트롤러로 이동하는 버튼으로 교체 완료! ★ --%>
+                        <button onclick="loadDiary('diary-update?no=${diary.no}&y=${curYear}&m=${curMonth}&d=${selectedDay}')" class="write-btn" style="background:#ddd; color:#333;">수정</button>
                         <button onclick="if(confirm('정말 이 일기를 삭제할까요? 🗑️')) loadDiary('diary-delete?no=${diary.no}&y=${curYear}&m=${curMonth}')" class="write-btn" style="background:#ff9999;">삭제</button>
                     </div>
                 </div>
             </div>
         </c:when>
 
-        <%-- [3] 기본 달력 & 특정 날짜 일기 목록 화면 --%>
+        <%-- [4] 기본 달력 & 특정 날짜 일기 목록 화면 --%>
         <c:otherwise>
             <div class="calendar-header">
                 <a href="javascript:void(0);" onclick="loadDiary('diary?y=${prevYear}&m=${prevMonth}')" class="cal-btn">◀</a>
@@ -91,12 +122,9 @@
 
                     <div class="posts">
                         <c:forEach var="p" items="${posts}">
-
-                            <%-- ★ 박스 전체 클릭 기능 (cursor: pointer 추가) ★ --%>
                             <div class="post-item" onclick="loadDiary('diary-detail?no=${p.no}&y=${curYear}&m=${curMonth}&d=${selectedDay}')" style="cursor: pointer; transition: 0.2s;">
 
                                 <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:10px; margin-bottom:10px;">
-                                        <%-- 이제 a 태그 없이 제목만 출력 --%>
                                     <span style="font-weight:bold; font-size:22px; color:#555;">${p.title}</span>
                                     <span style="font-size:14px; color:#bbb;">${curYear}.${curMonth}.${selectedDay}</span>
                                 </div>

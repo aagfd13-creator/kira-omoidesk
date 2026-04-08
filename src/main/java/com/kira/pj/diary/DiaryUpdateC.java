@@ -7,16 +7,19 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet(value = "/diary-update")
+@WebServlet("/diary-update")
 public class DiaryUpdateC extends HttpServlet {
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        // 브라우저에게 "이건 JSON 데이터야" 라고 알려줌
-        response.setContentType("application/json; charset=UTF-8");
-        DiaryDAO.DDAO.getCalendar(request);
+    // 1. [수정 버튼]을 눌렀을 때 -> 수정 폼 화면 띄워주기 (GET)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        DiaryDAO.DDAO.getDiaryDetail(request); // DB에서 예전 글 가져오기
+        request.setAttribute("showMode", "update"); // 'update' 폼 모드로 세팅
         request.getRequestDispatcher("diary/diary.jsp").forward(request, response);
     }
 
-    public void destroy() {
+    // 2. [수정완료 버튼]을 눌렀을 때 -> 진짜 DB 내용 바꿔치기 (POST)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8"); // 한글 깨짐 방지!
+        DiaryDAO.DDAO.updateDiary(request);
     }
 }
