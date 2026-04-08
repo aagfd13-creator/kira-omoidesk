@@ -1,26 +1,106 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 1. 처음 켜졌을 때 메인 화면(main.jsp) 로드
-    loadPage('main.jsp');
+  // ⭐ 브라우저야, 너 아까 누구 홈피 보고 있었는지 메모한 거 있어?
+  const savedId = sessionStorage.getItem("currentHostId");
+  const savedNick = sessionStorage.getItem("currentHostNick");
 
-    // 2. 메뉴/탭 버튼 클릭 이벤트 등록
-    document.querySelectorAll('.menu-item, .nb-tab').forEach(button => {
-        button.addEventListener('click', function () {
-            const targetUrl = this.getAttribute('data-src');
+  // 메모가 있으면 그 사람 홈피로 다시 돌려놓고, 없으면 내 홈피(main.jsp) 틀어줘
+  if (savedId && savedNick) {
+    goSearchMain(savedId, savedNick);
+  } else {
+    loadPage("main.jsp");
+  }
 
-            // 클릭한 탭 색상 활성화
-            document.querySelectorAll('.menu-item, .nb-tab').forEach(el => el.classList.remove('active'));
+  // 메뉴/탭 버튼 클릭 이벤트 등록
+  document.querySelectorAll(".menu-item, .nb-tab").forEach((button) => {
+    button.addEventListener("click", function () {
+      const targetUrl = this.getAttribute("data-src");
 
-            // 왼쪽 메뉴와 상단 탭 모두 동기화 처리 (선택사항)
-            const correspondingTabs = document.querySelectorAll(`[data-src="${targetUrl}"]`);
-            correspondingTabs.forEach(el => el.classList.add('active'));
+      // 활성화 UI 처리
+      document
+        .querySelectorAll(".menu-item, .nb-tab")
+        .forEach((el) => el.classList.remove("active"));
 
-            console.log(targetUrl);
-            loadPage(targetUrl);
-        });
+      // 왼쪽 메뉴와 상단 탭 모두 동기화 처리
+      const correspondingTabs = document.querySelectorAll(
+        `[data-src="${targetUrl}"]`,
+      );
+      correspondingTabs.forEach((el) => el.classList.add("active"));
+
+      loadPage(targetUrl);
     });
+  });
+
+  // ==========================================
+  // 2. 실시간 검색창 로직
+  // ==========================================
+  const searchInput = document.getElementById("live-search-input");
+  const searchDropdown = document.getElementById("search-dropdown");
+
+  // 혹시나 검색창이 없는 페이지에서 에러가 나는 것을 방지하는 안전장치
+  if (searchInput && searchDropdown) {
+    // 사용자가 타자를 칠 때마다 작동!
+    searchInput.addEventListener("input", function () {
+      const keyword = searchInput.value.trim();
+
+      // 검색어가 다 지워지면 드롭다운 숨기기
+      if (keyword === "") {
+        searchDropdown.classList.add("hidden");
+        searchDropdown.innerHTML = "";
+        return;
+      }
+
+      // 검색어가 있으면 서버로 물어보러 가기
+      renderDropdown(keyword);
+    });
+
+    // 서버에서 데이터 가져와서 화면에 그리는 함수
+    function renderDropdown(keyword) {
+      const targetUrl = `/search-users?keyword=${encodeURIComponent(keyword)}`;
+
+      fetch(targetUrl)
+        .then((response) => response.json())
+        .then((showSearchR) => {
+          searchDropdown.innerHTML = ""; // 그리기 전에 깔끔하게 도화지 비우기
+          console.log(showSearchR);
+          // 검색 결과가 0명일 때
+          if (showSearchR.length === 0) {
+            searchDropdown.innerHTML = `<div style="padding:15px; text-align:center; color:#c0b0a0; font-family:'Gaegu', cursive; font-size:14px;">결과가 없어요! 😢</div>`;
+          } else {
+            // 검색 결과가 있을 때 (예쁜 리스트 그리기)
+            showSearchR.forEach((host) => {
+              const searchHtmlTemp = `
+                                <div class="search-item" onclick="goSearchMain('${host.u_id}','${host.u_nickname}')">
+                                    <div class="search-item-title">${host.u_nickname} <span style="font-weight:normal; font-size:12px; color:#ff7675;">(${host.u_name})</span></div>
+                                    <div class="search-item-desc">📧 ${host.u_email}</div>
+                                </div>
+                            `;
+              searchDropdown.insertAdjacentHTML("beforeend", searchHtmlTemp);
+            });
+          }
+
+          // 다 그렸으니 숨겨뒀던 드롭다운 짠! 하고 보여주기
+          searchDropdown.classList.remove("hidden");
+        })
+        .catch((err) => console.error("검색 통신 에러:", err));
+    }
+
+    // 화면의 다른 곳을 클릭하면 센스있게 드롭다운 닫아주기
+    document.addEventListener("click", function (e) {
+      if (
+        !searchInput.contains(e.target) &&
+        !searchDropdown.contains(e.target)
+      ) {
+        searchDropdown.classList.add("hidden");
+      }
+    });
+  }
 });
 
-// ⭐ 1. 라우터 맵: 어떤 페이지에서 어떤 함수/디자인을 쓸지 한곳에 정리합니다.
+// ==========================================
+// 3. 공통 함수 및 라우터 설정 영역
+// ==========================================
+
+// ⭐ 라우터 맵: 어떤 페이지에서 어떤 함수/디자인을 쓸지 한 곳에 정리!
 const pageRoutes = {
     "board.jsp": {
         initFunc: () => loadGuestBoard(),
@@ -40,112 +120,88 @@ const pageRoutes = {
         // 페이지가 늘어나면 여기에 한 줄씩만 추가하면 끝!
     }
 }
-
-// 화면 갈아끼우기 함수
+// 화면(수첩 속지) 갈아끼우기 함수
 function loadPage(url) {
-    if (!url) return;
+  if (!url) return;
 
-    fetch(url)
-        .then(response => response.text())
-        .then(htmlData => {
-            // 1. 도화지에 껍데기 넣기
-            document.getElementById('notebook-content').innerHTML = htmlData;
+  fetch(url)
+    .then((response) => {
+        // 🔥 이게 핵심 (404, 500 잡기)
+        if (!response.ok) {
+            throw new Error(`HTTP 오류: ${response.status}`);
+        }
+        return response.text();
+    })
+    .then(htmlData => {
+      // 1. 도화지에 가져온 HTML 껍데기 넣기
+      document.getElementById("notebook-content").innerHTML = htmlData;
 
-            // 2. 수첩 CSS 초기화 (이전 페이지에서 붙은 특수 클래스 떼어내기)
-            const notebook = document.getElementById('notebook');
-            notebook.classList.remove('is-visitor'); // 나중에 특수 클래스가 늘어나면 배열로 관리해도 됩니다.
+      // 2. CSS 초기화
+      const notebook = document.getElementById("notebook");
+      notebook.classList.remove("is-visitor");
 
-            // ⭐ 3. 라우터 맵을 뒤져서 URL에 맞는 세팅을 자동으로 실행! (if문 실종사건!)
-            for (const path in pageRoutes) {
-                if (url.includes(path)) {
-                    const route = pageRoutes[path]; // 일치하는 설정 꺼내기
+        // 3. 라우터 실행
+        for (const path in pageRoutes) {
+            if (url.includes(path)) {
+                const route = pageRoutes[path];
 
-                    // 특수 CSS 클래스가 정의되어 있다면 수첩에 붙여줌
-                    if (route.cssClass) {
-                        notebook.classList.add(route.cssClass);
-                    }
-
-                    // 실행할 초기화 함수가 있다면 실행
-                    if (route.initFunc) {
-                        route.initFunc();
-                    }
-
-                    break; // 찾았으니 반복문 종료
+                if (route.cssClass) {
+                    notebook.classList.add(route.cssClass);
                 }
+
+                if (route.initFunc) {
+                    route.initFunc();
+                }
+
+                break;
             }
-        })
-        .catch(error => console.error("페이지 로드 실패:", error));
+        }
+    })
+      .catch(error => {
+          console.error("페이지 로드 실패:", error);
+
+          // 🔥 여기서 nb-error UI 띄우기
+          document.getElementById('notebook-content').innerHTML = `
+                <div class="nb-error">
+                    😢 페이지를 불러올 수 없어요
+                    <br>
+                    <button onclick="loadPage('${url}')">다시 시도</button>
+                </div>
+            `;
+      });
 }
 
-// index.jsp 하단 script 부분 혹은 index.js
 
-//라우터맵 있으면 쓸필요없음? 아니면 index.jsp 에 data-src 가 .jsp가 아닌 경우를 위해 필요한가?
+function goSearchMain(id, nick) {
+  // 1. 클릭하는 순간 거추장스러운 검색 드롭다운 창 숨기기
+  document.getElementById("search-dropdown").classList.add("hidden");
+  document.getElementById("live-search-input").value = ""; // 검색어 비우기
 
-// document.querySelectorAll('.menu-item, .nb-tab').forEach(tab => {
-//     tab.addEventListener('click', function () {
-//         const target = this.getAttribute('data-src');
-//
-//         if (target.includes('diary')) {
-//             loadDiary(); // 다이어리 비동기 로드 함수 호출
-//         } else if (target.includes('board')) {
-//             loadGuestBoard(); // f팀원분이 만든 방명록 함수 호출
-//         } else if(target.includes('photo')){
-//             loadPhoto();
-//         }
-//     });
-// });
+  // ⭐ 새로고침 대비용 포스트잇 붙이기 (주소창 변경 없음!)
+  sessionStorage.setItem("currentHostId", id);
+  sessionStorage.setItem("currentHostNick", nick);
 
-// ... 다른 메뉴 처리
-//=============================================================================================
-// 검색창 js 인데 수정할거 !!
-//=============================================================================================
-document.addEventListener("DOMContentLoaded", function () {
-    const searchInput = document.getElementById('live-search-input');
-    const searchDropdown = document.getElementById('search-dropdown');
+  const searchUrl = `/search-main?host_id=${id}`;
+  fetch(searchUrl)
+    .then((response) => response.json())
+    .then((searchData) => {
+      // 왼쪽 프로필 이름 변경
+      document.querySelector(".profile-name").innerText = nick;
+      // 상단 미니홈피 제목 변경 (예: 📖 김동민의 소소한 일상)
+      const titleElement = document.querySelector("#host-title");
+      if (titleElement) titleElement.innerText = `${searchData.hompy_title}`;
 
-    searchInput.addEventListener('input', function () {
-        const keyword = searchInput.value.trim();
+      // 왼쪽 프로필 상태메시지  변경
+      const stElement = document.querySelector("#status-text");
 
-        if (keyword === "") {
-            searchDropdown.classList.add('hidden');
-            searchDropdown.innerHTML = '';
-            return;
-        }
-
-        // 🚨 임시 테스트용 더미 데이터
-        const dummyData = [
-            {pk: "user1", nick: "동민", name: "김동민", title: "동민이의 소소한 일상"},
-            {pk: "user2", nick: "코딩요정", name: "박자바", title: "버그 없는 청정구역"}
-        ];
-
-        renderDropdown(dummyData);
-    });
-});
-    function renderDropdown(users) {
-        searchDropdown.innerHTML = '';
-
-        if (users.length === 0) {
-            searchDropdown.innerHTML = `<div style="padding:15px; text-align:center; color:#c0b0a0; font-family:'Gaegu', cursive; font-size:14px;">결과가 없어요! 😢</div>`;
-        } else {
-            users.forEach(user => {
-                const item = document.createElement('div');
-                item.className = 'search-item';
-                // 클릭 시 파도타기 이동
-                item.onclick = () => location.href = `/?host_id=${user.pk}`;
-
-                item.innerHTML = `
-                    <div class="search-item-title">${user.nick} <span style="font-weight:normal; font-size:12px; color:#ff7675;">(${user.name})</span></div>
-                    <div class="search-item-desc">🏠 ${user.title}</div>
-                `;
-                searchDropdown.appendChild(item);
-            });
-        }
-        searchDropdown.classList.remove('hidden');
-    }
-
-    // 다른 곳 클릭하면 드롭다운 닫기
-    // document.addEventListener('click', function (e) {
-    //     if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
-    //         searchDropdown.classList.add('hidden');
-    //     }
-    // });
+      if (stElement) {
+        stElement.innerHTML = `${searchData.st_message}`;
+      }
+      const stDate = document.querySelector(".status-since");
+      if (searchData.st_date) {
+        // "2026-03-31" 에서 앞 4글자("2026")만 자름!
+        stDate.innerHTML = `${searchData.st_date.substring(0, 4)}`;
+      }
+    })
+    .catch((error) => console.error("파도타기 데이터 로드 실패:", error));
+}

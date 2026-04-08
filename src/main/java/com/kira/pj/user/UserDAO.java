@@ -300,7 +300,7 @@ public class UserDAO {
                 session.setAttribute("loginUserNickname", rs.getString("u_nickname"));
                 session.setAttribute("loginUserEmail", rs.getString("u_email"));
 
-                return json(true, "로그인 성공", "/");
+                return json(true, "로그인 성공", "/main");
             }
 
             return json(false, "아이디 또는 비밀번호가 올바르지 않습니다.");
@@ -671,5 +671,92 @@ public class UserDAO {
         message.setText("인증번호는 [" + code + "] 입니다.");
 
         Transport.send(message);
+    }
+    /* 마이페이지 비밀번호 변경 */
+    public boolean changePw(String pk, String oldPw, String newPw) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBManager.connect();
+
+            // 1. 기존 비밀번호 확인
+            String checkSql = "select u_pw from userReg where u_pk = ?";
+            pstmt = conn.prepareStatement(checkSql);
+            pstmt.setString(1, pk);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String dbPw = rs.getString("u_pw");
+
+                // 기존 비밀번호 틀림
+                if (!dbPw.equals(oldPw)) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            DBManager.close(conn, pstmt, rs);
+
+            // 2. 새 비밀번호 변경
+            conn = DBManager.connect();
+            String updateSql = "update userReg set u_pw = ? where u_pk = ?";
+            pstmt = conn.prepareStatement(updateSql);
+            pstmt.setString(1, newPw);
+            pstmt.setString(2, pk);
+
+            return pstmt.executeUpdate() == 1;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            DBManager.close(conn, pstmt, rs);
+        }
+    }
+    /* 마이페이지 회원탈퇴 */
+    public boolean deleteUser(String pk, String pw) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = DBManager.connect();
+
+            // 1. 비밀번호 확인
+            String checkSql = "select u_pw from userReg where u_pk = ?";
+            pstmt = conn.prepareStatement(checkSql);
+            pstmt.setString(1, pk);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String dbPw = rs.getString("u_pw");
+
+                // 비밀번호 틀림
+                if (!dbPw.equals(pw)) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+
+            DBManager.close(conn, pstmt, rs);
+
+            // 2. 회원 삭제
+            conn = DBManager.connect();
+            String deleteSql = "delete from userReg where u_pk = ?";
+            pstmt = conn.prepareStatement(deleteSql);
+            pstmt.setString(1, pk);
+
+            return pstmt.executeUpdate() == 1;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        } finally {
+            DBManager.close(conn, pstmt, rs);
+        }
     }
 }
