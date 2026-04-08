@@ -181,6 +181,19 @@ function goSearchMain(id, nick) {
   fetch(searchUrl)
     .then((response) => response.json())
     .then((searchData) => {
+
+        // 1) 모든 메뉴와 탭의 불빛(active)을 끕니다.
+        document.querySelectorAll(".menu-item, .nb-tab").forEach((el) => el.classList.remove("active"));
+
+        // ⭐ 2) 수정된 부분: ".menu-item" 뿐만 아니라 ".nb-tab"도 같이 찾아서 불을 켜줍니다!
+        document.querySelectorAll(".menu-item, .nb-tab").forEach(el => {
+            const src = el.getAttribute("data-src");
+            // 주소에 'home'이라는 단어가 포함되어 있으면 무조건 불을 켭니다.
+            if(src && src.includes("home")) {
+                el.classList.add("active");
+            }
+        });
+
       // 왼쪽 프로필 이름 변경
       document.querySelector(".profile-name").innerText = nick;
 
