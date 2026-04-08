@@ -116,3 +116,28 @@ function submitDiaryForm() {
         })
         .catch(error => console.error("일기 등록 통신 실패:", error));
 }
+
+// 일기 수정 폼 데이터를 서버로 몰래 쏴주는 함수
+function updateDiaryForm() {
+    const form = document.getElementById('diaryUpdateForm');
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+
+    // diary-update 주소로 수정된 내용 쏘기 (POST)
+    fetch('diary-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: params
+    })
+        .then(response => response.text())
+        .then(data => {
+            // 수정이 무사히 끝났으면, 방금 고친 그 글의 '상세 보기' 화면으로 다시 이동!
+            const no = formData.get('no');
+            const y = formData.get('d_year');
+            const m = formData.get('d_month');
+            const d = formData.get('d_date');
+
+            loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
+        })
+        .catch(error => console.error("일기 수정 통신 실패:", error));
+}

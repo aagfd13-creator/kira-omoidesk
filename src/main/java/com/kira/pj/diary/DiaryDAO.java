@@ -1,10 +1,6 @@
 package com.kira.pj.diary;
 
 import com.kira.pj.main.DBManager;
-
-import com.google.gson.Gson;
-
-import java.util.Map;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,15 +10,11 @@ import javax.servlet.http.HttpServletRequest;
 
 public class DiaryDAO {
 
-
     public static final DiaryDAO DDAO = new DiaryDAO();
     public Connection con = null;
 
     private DiaryDAO() {
-
     }
-
-    private ArrayList<DiaryDTO> diaries;
 
     public void getCalendar(HttpServletRequest req) {
 
@@ -95,6 +87,10 @@ public class DiaryDAO {
                     dto.setNo(rs.getInt("d_no"));
                     dto.setTitle(rs.getString("d_title"));
                     dto.setTxt(rs.getString("d_txt"));
+
+                    // ★ 목록에서도 나중에 쓸 수 있게 미리 담아둠!
+                    dto.setVisibility(rs.getInt("d_visibility"));
+
                     posts.add(dto);
                 }
             } catch (Exception e) {
@@ -120,27 +116,20 @@ public class DiaryDAO {
             pstmt = con.prepareStatement(sql);
             rs = pstmt.executeQuery();
 
-            // 자바에서 날짜를 예쁘게 바꿔줄 도구 준비
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-
             while (rs.next()) {
                 DiaryDTO dto = new DiaryDTO();
                 dto.setNo(rs.getInt("d_no"));
                 dto.setId(rs.getString("d_id"));
-
-                // ★ 핵심: DB에서 원본 DATE를 꺼낸 다음, 자바가 문자열로 예쁘게 바꿈!
-                java.sql.Date dbDate = rs.getDate("d_date");
-                String formattedDate = sdf.format(dbDate);
-                dto.setD_date(formattedDate); // DTO에는 String으로 쏙 들어감
-
+                dto.setDate(rs.getDate("d_date"));
                 dto.setTitle(rs.getString("d_title"));
                 dto.setTxt(rs.getString("d_txt"));
 
+                // ★ 전체 조회에서도 공개 설정값 담아둠!
+                dto.setVisibility(rs.getInt("d_visibility"));
+
                 diaries.add(dto);
             }
-            System.out.println(diaries);
             req.setAttribute("diaries", diaries);
-
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -156,19 +145,22 @@ public class DiaryDAO {
 
         try {
             con = DBManager.connect();
-            String sql = "INSERT INTO diary_test VALUES (diary_test_seq.nextval, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, SYSDATE)";
+
+            // ★ SQL 수정: d_visibility 값을 넣을 물음표(?) 하나 추가!
+            String sql = "INSERT INTO diary_test VALUES (diary_test_seq.nextval, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, SYSDATE, ?)";
             pstmt = con.prepareStatement(sql);
 
-            // 일반 파라미터로 데이터 쏙쏙 꺼내기
+            // 파라미터 꺼내기 (visibility 포함)
             String year = req.getParameter("d_year");
             String month = req.getParameter("d_month");
             String date = req.getParameter("d_date");
             String title = req.getParameter("d_title");
             String txt = req.getParameter("d_txt");
+            String visibility = req.getParameter("d_visibility"); // 👈 화면에서 보낸 설정값!
 
             String id = "pass02"; // 임시 아이디
 
-            // 날짜 예쁘게 합치기
+            // 날짜 합치기
             String formattedMonth = String.format("%02d", Integer.parseInt(month));
             String formattedDay = String.format("%02d", Integer.parseInt(date));
             String fullDate = year + "-" + formattedMonth + "-" + formattedDay;
@@ -178,8 +170,13 @@ public class DiaryDAO {
             pstmt.setString(3, title);
             pstmt.setString(4, txt);
 
+            // ★ 5번째 물음표에 visibility 설정값 꽂아넣기!
+            // 만약 값이 안 넘어왔으면 기본값 2(전체공개)로 세팅
+            int visValue = (visibility == null || visibility.equals("")) ? 2 : Integer.parseInt(visibility);
+            pstmt.setInt(5, visValue);
+
             if (pstmt.executeUpdate() == 1) {
-                System.out.println("일기 등록 완벽 성공! ദ്ദി(⩌ᴗ⩌ )");
+                System.out.println("일기 등록 완벽 성공! (공개설정 적용 완료)");
             }
 
         } catch (Exception e) {
@@ -188,17 +185,113 @@ public class DiaryDAO {
         } finally {
             DBManager.close(con, pstmt, null);
         }
+    }
 
+    // 상세보기 기능
+    public void getDiaryDetail(HttpServletRequest req) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
 
+        try {
+            con = DBManager.connect();
+
+            // 글 번호와 날짜 챙기기
+            String no = req.getParameter("no");
+            String y = req.getParameter("y");
+            String m = req.getParameter("m");
+            String d = req.getParameter("d");
+
+            // 글 검색!
+            String sql = "SELECT * FROM diary_test WHERE d_no = ?";
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, Integer.parseInt(no));
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                DiaryDTO dto = new DiaryDTO();
+                dto.setNo(rs.getInt("d_no"));
+                dto.setId(rs.getString("d_id"));
+                dto.setTitle(rs.getString("d_title"));
+                dto.setTxt(rs.getString("d_txt"));
+                dto.setDate(rs.getDate("d_date"));
+
+                // ★ DB에서 d_visibility 값을 꺼내서 DTO에 쏙! (수정 화면에 띄우기 위함)
+                dto.setVisibility(rs.getInt("d_visibility"));
+
+                req.setAttribute("diary", dto);
+            }
+
+            // 뒤로가기용 날짜
+            req.setAttribute("curYear", y);
+            req.setAttribute("curMonth", m);
+            req.setAttribute("selectedDay", d);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, rs);
+        }
+    }
+
+    // 삭제 기능
+    public void deleteDiary(HttpServletRequest request) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = DBManager.connect();
+            String no = request.getParameter("no");
+            String sql = "DELETE FROM diary_test WHERE d_no = ?";
+            pstmt = con.prepareStatement(sql);
+            pstmt.setInt(1, Integer.parseInt(no));
+
+            if (pstmt.executeUpdate() == 1) {
+                System.out.println("일기 삭제 완벽 성공!");
+            }
+
+        } catch (Exception e) {
+            System.out.println("일기 삭제 실패 ㅠㅠ");
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
+    }
+
+    // 수정 기능
+    public void updateDiary(HttpServletRequest request) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = DBManager.connect();
+
+            // 파라미터 받기
+            String no = request.getParameter("no");
+            String title = request.getParameter("d_title");
+            String txt = request.getParameter("d_txt");
+            String visibility = request.getParameter("d_visibility"); // 👈 폼에서 변경한 설정값!
+
+            // ★ SQL 수정: d_visibility 컬럼도 덮어쓰도록 쿼리 추가!
+            String sql = "UPDATE diary_test SET d_title = ?, d_txt = ?, d_visibility = ? WHERE d_no = ?";
+            pstmt = con.prepareStatement(sql);
+
+            pstmt.setString(1, title);
+            pstmt.setString(2, txt);
+            // 만약 값이 안 넘어왔으면 기본값 2로 세팅
+            int visValue = (visibility == null || visibility.equals("")) ? 2 : Integer.parseInt(visibility);
+            pstmt.setInt(3, visValue);
+            pstmt.setInt(4, Integer.parseInt(no));
+
+            if (pstmt.executeUpdate() == 1) {
+                System.out.println("일기 수정 완벽 성공! (공개설정 변경 완료)");
+            }
+
+        } catch (Exception e) {
+            System.out.println("일기 수정 실패 ㅠㅠ");
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
     }
 }
-
-
-
-
-
-
-
-
-
-

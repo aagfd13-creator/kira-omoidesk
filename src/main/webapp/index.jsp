@@ -118,7 +118,7 @@
 
                     <div id="search-dropdown" class="search-dropdown hidden"></div>
                 </div>
-                <div class="visitor">Today 15 | Total 1,234</div>
+                <div class="visitor">Today <span id="v-today">0</span> | Total <span id="v-total">0</span></div>
             </div>
             <div class="nb-tabs">
                 <div
@@ -221,7 +221,7 @@
                     <li class="v-empty">불러오는 중...</li>
                 </ul>
 
-                <div class="v-widget-btn" onclick="loadPage('${pageContext.request.contextPath}/visitor?ajax=true')">
+                <div class="v-widget-btn" onclick="vloadPage('${pageContext.request.contextPath}/visitor?ajax=true')">
                     <span class="v-btn-text">방문자 보기 ▶</span>
                 </div>
             </div>
