@@ -10,48 +10,47 @@ import com.kira.pj.main.DBManager;
 
 public class VisitorDAO {
 
-    // 1. 발도장 찍기 및 갱신 (Upsert) - 세션 PK 기반
+    // 1. 발도장 찍기 (최신 시간 갱신을 위해 DELETE 후 INSERT 수행)
     public int upsertVisitor(VisitorDTO dto) {
         Connection con = null;
-        PreparedStatement pstmt = null;
-
-        // [핵심] IP 조건이 삭제되고, 철저하게 작성자와 주인의 PK 조합만으로 중복을 검사한다.
-        String sql =
-                "MERGE INTO visitor_log " +
-                        "USING dual " +
-                        "ON (v_writer_pk = ? AND v_owner_pk = ? AND TRUNC(v_date) = TRUNC(SYSDATE)) " +
-                        "WHEN MATCHED THEN " +
-                        "    UPDATE SET v_emoji = ? " +
-                        "WHEN NOT MATCHED THEN " +
-                        "    INSERT (v_id, v_writer_pk, v_owner_pk, v_emoji, v_date) " +
-                        "    VALUES (visitor_seq.NEXTVAL, ?, ?, ?, SYSDATE)";
+        PreparedStatement pstmtDel = null;
+        PreparedStatement pstmtIns = null;
 
         try {
             con = DBManager.connect();
-            pstmt = con.prepareStatement(sql);
+            // 두 개의 작업(삭제, 삽입)을 하나의 세트로 묶기 위해 자동 커밋을 끈다.
+            con.setAutoCommit(false);
 
-            // ON 절 파라미터
-            pstmt.setString(1, dto.getV_writer_pk());
-            pstmt.setString(2, dto.getV_owner_pk());
+            // Step A: 오늘 날짜로 남긴 발도장이 있다면 무조건 삭제한다.
+            String sqlDel = "DELETE FROM visitor_log WHERE v_writer_pk = ? AND v_owner_pk = ? AND TRUNC(v_date) = TRUNC(SYSDATE)";
+            pstmtDel = con.prepareStatement(sqlDel);
+            pstmtDel.setString(1, dto.getV_writer_pk());
+            pstmtDel.setString(2, dto.getV_owner_pk());
+            pstmtDel.executeUpdate();
 
-            // MATCHED 절 (UPDATE)
-            pstmt.setInt(3, dto.getV_emoji());
+            // Step B: 기존 것이 지워졌든 안 지워졌든, 지금 시간(SYSDATE)으로 무조건 새로 등록한다.
+            String sqlIns = "INSERT INTO visitor_log (v_id, v_writer_pk, v_owner_pk, v_emoji, v_date) VALUES (visitor_seq.NEXTVAL, ?, ?, ?, SYSDATE)";
+            pstmtIns = con.prepareStatement(sqlIns);
+            pstmtIns.setString(1, dto.getV_writer_pk());
+            pstmtIns.setString(2, dto.getV_owner_pk());
+            pstmtIns.setInt(3, dto.getV_emoji());
 
-            // NOT MATCHED 절 (INSERT)
-            pstmt.setString(4, dto.getV_writer_pk());
-            pstmt.setString(5, dto.getV_owner_pk());
-            pstmt.setInt(6, dto.getV_emoji());
+            int result = pstmtIns.executeUpdate();
 
-            return pstmt.executeUpdate();
+            // 삭제와 삽입이 모두 에러 없이 끝났다면 완벽하게 저장(Commit)한다.
+            con.commit();
+            return result;
 
         } catch (Exception e) {
+            // 중간에 에러가 나면 데이터를 롤백(취소)하여 DB를 보호한다.
+            try { if (con != null) con.rollback(); } catch (Exception ex) {}
             e.printStackTrace();
-            throw new RuntimeException("방명록 Upsert 오류: " + e.getMessage(), e);
+            throw new RuntimeException("방명록 갱신 오류: " + e.getMessage(), e);
         } finally {
-            DBManager.close(con, pstmt, null);
+            DBManager.close(con, pstmtIns, null);
+            DBManager.close(null, pstmtDel, null);
         }
     }
-
     // 2. 전체 방문자 목록 조회
     public List<VisitorDTO> getAllVisitors(String ownerPk) {
         Connection con = null;
@@ -86,17 +85,20 @@ public class VisitorDAO {
         return list;
     }
 
-    // 3. 최근 방문자 5명 조회 (메인 위젯용)
+    // 3. 최근 방문자 5명 조회 (메인 위젯용) - JOIN 적용
     public List<VisitorDTO> getRecentVisitors(String ownerPk) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         List<VisitorDTO> list = new ArrayList<>();
 
+        // [핵심] userReg 테이블과 JOIN하여 u_nickname을 가져온다.
         String sql =
                 "SELECT * FROM (" +
-                        "  SELECT v_id, v_writer_pk, v_emoji, TO_CHAR(v_date, 'MM.DD') as v_date_fmt " +
-                        "  FROM visitor_log WHERE v_owner_pk = ? ORDER BY v_date DESC" +
+                        "  SELECT v.v_id, v.v_writer_pk, u.u_nickname AS v_writer_nickname, v.v_emoji, TO_CHAR(v.v_date, 'MM.DD') as v_date_fmt " +
+                        "  FROM visitor_log v " +
+                        "  JOIN userReg u ON v.v_writer_pk = u.u_pk " +
+                        "  WHERE v.v_owner_pk = ? ORDER BY v.v_date DESC" +
                         ") WHERE rownum <= 5";
         try {
             con = DBManager.connect();
@@ -107,6 +109,7 @@ public class VisitorDAO {
             while (rs.next()) {
                 VisitorDTO v = new VisitorDTO();
                 v.setV_writer_pk(rs.getString("v_writer_pk"));
+                v.setV_writer_nickname(rs.getString("v_writer_nickname")); // 닉네임 세팅
                 v.setV_date(rs.getString("v_date_fmt"));
                 v.setV_emoji(rs.getInt("v_emoji"));
                 list.add(v);
@@ -139,7 +142,7 @@ public class VisitorDAO {
         }
     }
 
-    // 5. 페이징 방문자 조회 (과거의 잔재 완전 삭제)
+    // 5. 페이징 방문자 조회 - JOIN 적용
     public List<VisitorDTO> getVisitorsByPage(String ownerPk, int page) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -149,19 +152,21 @@ public class VisitorDAO {
         int start = (page - 1) * 7 + 1;
         int end = page * 7;
 
-        // [핵심 수정] SELECT 컬럼과 WHERE 조건절 모두 PK 기준으로 완벽히 교체
+        // [핵심] userReg 테이블과 JOIN하여 u_nickname을 가져온다.
         String sql =
                 "SELECT * FROM (" +
                         "  SELECT rownum as rn, t.* FROM (" +
-                        "    SELECT v_id, v_writer_pk, v_emoji, TO_CHAR(v_date, 'MM.DD AM HH12:MI') as v_date_fmt " +
-                        "    FROM visitor_log WHERE v_owner_pk = ? ORDER BY v_date DESC" +
+                        "    SELECT v.v_id, v.v_writer_pk, u.u_nickname AS v_writer_nickname, v.v_emoji, TO_CHAR(v.v_date, 'MM.DD AM HH12:MI') as v_date_fmt " +
+                        "    FROM visitor_log v " +
+                        "    JOIN userReg u ON v.v_writer_pk = u.u_pk " +
+                        "    WHERE v.v_owner_pk = ? ORDER BY v.v_date DESC" +
                         "  ) t" +
                         ") WHERE rn BETWEEN ? AND ?";
 
         try {
             con = DBManager.connect();
             pstmt = con.prepareStatement(sql);
-            pstmt.setString(1, ownerPk); // 변수명 교체 반영
+            pstmt.setString(1, ownerPk);
             pstmt.setInt(2, start);
             pstmt.setInt(3, end);
             rs = pstmt.executeQuery();
@@ -169,7 +174,8 @@ public class VisitorDAO {
             while (rs.next()) {
                 VisitorDTO v = new VisitorDTO();
                 v.setV_id(rs.getInt("v_id"));
-                v.setV_writer_pk(rs.getString("v_writer_pk")); // getString 내부도 완벽히 교체
+                v.setV_writer_pk(rs.getString("v_writer_pk"));
+                v.setV_writer_nickname(rs.getString("v_writer_nickname")); // 닉네임 세팅
                 v.setV_date(rs.getString("v_date_fmt"));
                 v.setV_emoji(rs.getInt("v_emoji"));
                 list.add(v);
