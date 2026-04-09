@@ -13,6 +13,7 @@ public class SearchVO {
     private String u_name;
     private String u_nickname;
     private String u_email;
+    private String u_pk;
 
     public  String toJSON(){
         Gson gson = new Gson();
