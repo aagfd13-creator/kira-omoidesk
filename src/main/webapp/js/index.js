@@ -135,8 +135,9 @@ function goSearchMain(id, nick) {
     if (searchInput) searchInput.value = "";
 
     // 2. 세션에 새 주인 정보 저장 (가장 중요)
-    sessionStorage.setItem("currentHostId", id);
-    sessionStorage.setItem("currentHostNick", nick);
+
+        sessionStorage.setItem("currentHostId", id);
+        sessionStorage.setItem("currentHostNick", nick);
 
     // ⭐ 3. 무조건 그 사람의 '홈' 화면으로 강제 이동! (방명록 유지 안 함)
     loadPage(`/home?ajax=true`);

@@ -25,7 +25,7 @@ public class HomeDAO {
             rs = ps.executeQuery();
             String question = null;
             if(rs.next()) {
-                question = rs.getString(2);
+                question = rs.getString("question");
                 return question;
             }
         } catch (Exception e) {
