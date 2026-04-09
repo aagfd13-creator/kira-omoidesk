@@ -14,8 +14,17 @@ import java.io.IOException;
 public class Home extends HttpServlet {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-        request.setAttribute("question",HomeDAO.RandomQ(request,response));
-        request.setAttribute("searchMain",SearchDAO.searchMain(request));
+
+        String host_id = request.getParameter("host_id");
+        if (host_id == null || host_id.equals("undefined") || host_id.isEmpty()) {
+            host_id = (String) request.getSession().getAttribute("loginUserId");
+        }
+
+        // 🌟 2. [수정할 부분] 옛날 RandomQ 지우고, 새로운 getDailyQnA 로 교체!
+        // 여기서 "dailyQna" 라는 이름으로 담아줘야 JSP에서 ${dailyQna.question} 으로 꺼내 쓸 수 있습니다.
+        request.setAttribute("dailyQna", HomeDAO.getDailyQnA(request));
+
+        request.setAttribute("searchMain", SearchDAO.searchMain(request));
         request.getRequestDispatcher("/main.jsp").forward(request, response);
 
 

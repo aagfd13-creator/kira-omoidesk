@@ -1,3 +1,4 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 pageEncoding="UTF-8" %>
 
@@ -47,12 +48,47 @@ pageEncoding="UTF-8" %>
 
         <div class="home-qna">
             <h3 class="qna-title">🎲 오늘의 문답</h3>
-            <p class="qna-question">Q. ${question}</p>
+            <p class="qna-question">Q. ${dailyQna.question}</p>
 
-            <div class="qna-input-area">
-                <textarea id="qna-answer" placeholder="다이어리에 기록해 보세요! ✏️"></textarea>
-                <button onclick="submitQnA()" class="qna-submit-btn">다이어리 추가 ✍️</button>
-            </div>
+            <c:choose>
+                <%-- 1. 아직 답변을 안 적은 상태 --%>
+                <c:when test="${empty dailyQna.answer}">
+                    <div class="qna-input-area" id="qna-form">
+                        <input type="hidden" id="qna-id" value="${dailyQna.q_id}">
+                        <textarea id="qna-answer" class="qna-textarea" placeholder="오늘의 답변을 남겨보세요! ✏️"></textarea>
+
+                        <div class="qna-btn-group">
+                            <button onclick="saveQnA()" class="qna-submit-btn">확인</button>
+                        </div>
+                    </div>
+                </c:when>
+
+                <%-- 2. 이미 답변을 적은 상태 --%>
+                <c:otherwise>
+                    <%-- 보기 모드 --%>
+                    <div id="qna-view-mode" class="qna-answered-area">
+                        <div class="qna-answered-box">
+                            <span id="qna-answer-text" class="qna-answer-text">A. ${dailyQna.answer}</span>
+                        </div>
+
+                        <div class="qna-btn-group">
+                            <button onclick="toggleEditQnA()" class="qna-cancel-btn">수정</button>
+                            <button onclick="addQnAToDiary()" class="qna-submit-btn">다이어리에 추가 ✍️</button>
+                        </div>
+                    </div>
+
+                    <%-- 수정 모드 (초기엔 숨김) --%>
+                    <div id="qna-edit-mode" class="qna-input-area qna-hidden">
+                        <input type="hidden" id="qna-id" value="${dailyQna.q_id}">
+                        <textarea id="qna-edit-answer" class="qna-textarea">${dailyQna.answer}</textarea>
+
+                        <div class="qna-btn-group">
+                            <button onclick="toggleEditQnA()" class="qna-cancel-btn">취소</button>
+                            <button onclick="saveQnA('edit')" class="qna-submit-btn">확인</button>
+                        </div>
+                    </div>
+                </c:otherwise>
+            </c:choose>
         </div>
 
     </div>
