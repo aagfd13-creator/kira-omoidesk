@@ -17,6 +17,10 @@ document.addEventListener("DOMContentLoaded", function () {
     if (typeof checkFriendStatus === "function") {
         checkFriendStatus(loginUserPk);
     }
+    // 🚨 [여기에 추가!] 로그인 직후 나에게 온 일촌 신청이 있는지 확인해서 알림 띄우기
+    if (typeof checkIncomingFriendRequests === "function") {
+        checkIncomingFriendRequests();
+    }
 
 
     // 메뉴/탭 버튼 클릭 이벤트 등록
@@ -194,8 +198,8 @@ function updateHitCount() {
 function checkFriendStatus(targetPk) {
     const btn = document.getElementById("btn-friend-action");
     if (!btn) return;
-
-    if (!targetPk || targetPk === loginUserPk) {
+    // 🚨 [강력한 방어막] targetPk가 내 PK와 같거나, 아예 없으면 무조건 숨김
+    if (!targetPk || targetPk === loginUserPk || targetPk === "" || targetPk === "null") {
         btn.style.display = "none";
         return;
     }
@@ -247,9 +251,8 @@ function checkFriendStatus(targetPk) {
         .catch(err => console.error("[일촌 확인 에러]:", err));
 }
 
-// ==========================================
 // 6. 일촌 버튼 클릭 액션 처리
-// ==========================================
+
 function handleFriendAction() {
     const btn = document.getElementById("btn-friend-action");
     const action = btn.dataset.action;
@@ -287,4 +290,77 @@ function handleFriendAction() {
             }
         })
         .catch(err => console.error("일촌 액션 에러:", err));
+}
+
+// 나에게 온 일촌 신청 확인
+// 나에게 온 일촌 신청 확인
+function checkIncomingFriendRequests() {
+    console.log("[알림 확인] 서버에 일촌 신청 목록 요청..."); // 🔍 추적기 1
+
+    fetch(`/friendview?action=pendingList`)
+        .then(res => {
+            if(!res.ok) throw new Error("서버 응답 오류");
+            return res.json();
+        })
+        .then(list => {
+            console.log("[알림 확인] 서버에서 받은 목록:", list); // 🔍 추적기 2 (여기가 빈 배열 [] 이면 안 뜸)
+
+            // 🚨 수정: profile-card 안쪽이 아니라 바깥쪽(.profile)에 안전하게 붙인다!
+            const profileArea = document.querySelector(".profile");
+            if(!profileArea) return;
+
+            // 기존 알림창이 있다면 찌꺼기 제거
+            const oldNotify = document.getElementById("friend-notify");
+            if (oldNotify) oldNotify.remove();
+
+            // 받은 신청이 1개라도 있으면 알림창 생성
+            if (list && list.length > 0) {
+                const notifyDiv = document.createElement("div");
+                notifyDiv.id = "friend-notify";
+                notifyDiv.style = "background:#fff5f5; border:1px solid #ff7675; padding:12px; border-radius:10px; margin-top:15px; font-size:13px; box-shadow: 2px 2px 5px rgba(0,0,0,0.03);";
+
+                let html = `<p style="margin:0 0 8px 0; color:#ff7675; font-weight:bold; font-family:'Gaegu', cursive; font-size:16px;">💌 일촌 신청 도착!</p>`;
+
+                list.forEach(req => {
+                    html += `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border-bottom:1px dashed #f2c0bd; padding-bottom:5px;">
+                            <span style="color:#5a4a3a;"><b>${req.nickname}</b>님</span>
+                            <div style="display:flex; gap:5px;">
+                                <button onclick="handleAccept('${req.requesterPk}')" style="background:#ff7675; color:white; border:none; border-radius:5px; cursor:pointer; padding:4px 8px; font-family:'Gaegu', cursive;">수락</button>
+                                <button onclick="handleReject('${req.requesterPk}')" style="background:#f0eee5; color:#8a7a78; border:none; border-radius:5px; cursor:pointer; padding:4px 8px; font-family:'Gaegu', cursive;">거절</button>
+                            </div>
+                        </div>`;
+                });
+                notifyDiv.innerHTML = html;
+                profileArea.appendChild(notifyDiv);
+            }
+        })
+        .catch(err => console.error("[알림 확인 에러]:", err));
+}
+
+// 수락 버튼 함수
+function handleAccept(requesterPk) {
+    if (!confirm("일촌 신청을 수락할까요?")) return;
+    executeFriendAction("accept", requesterPk);
+}
+
+// 거절 버튼 함수
+function handleReject(requesterPk) {
+    if (!confirm("신청을 거절하시겠습니까?")) return;
+    executeFriendAction("delete", requesterPk);
+}
+
+// 공통 액션 실행기
+function executeFriendAction(action, targetPk) {
+    const params = new URLSearchParams({action: action, targetPk: targetPk});
+    fetch('/friendaction', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+        body: params
+    }).then(res => {
+        if (res.ok) {
+            checkIncomingFriendRequests(); // 알림창 갱신
+            alert(action === "accept" ? "이제 일촌입니다! ✨" : "거절되었습니다.");
+        }
+    });
 }

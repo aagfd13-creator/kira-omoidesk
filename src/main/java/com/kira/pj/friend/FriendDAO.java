@@ -3,6 +3,11 @@ package com.kira.pj.friend;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.kira.pj.main.DBManager;
 
 public class FriendDAO {
@@ -116,5 +121,33 @@ public class FriendDAO {
         } finally {
             DBManager.close(con, pstmt, null);
         }
+    }
+    // 나에게 일촌 신청을 보낸 사람들의 목록 조회 (u_nickname 포함)
+    public List<Map<String, String>> getPendingRequests(String myPk) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<Map<String, String>> list = new ArrayList<>();
+
+        String sql = "SELECT f.f_requester, u.u_nickname " +
+                "FROM friend_relation f " +
+                "JOIN userReg u ON f.f_requester = u.u_pk " +
+                "WHERE f.f_receiver = ? AND f.f_status = 0";
+
+        try {
+            con = DBManager.connect();
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, myPk);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Map<String, String> map = new HashMap<>();
+                map.put("requesterPk", rs.getString("f_requester"));
+                map.put("nickname", rs.getString("u_nickname"));
+                list.add(map);
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, rs); }
+        return list;
     }
 }
