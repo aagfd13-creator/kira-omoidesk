@@ -97,5 +97,82 @@ public class PhotoDAO {
         return 0;
 
     }
+
+//    public int updateProfile(HttpServletRequest request) {
+//        String imgUrl = request.getParameter("imgUrl");
+//        System.out.println("받은 이미지 URL: " + imgUrl);
+//        Connection conn = null;
+//        PreparedStatement ps = null;
+//        String sql = "insert into profile values(? , ?)";
+//        try {
+//            conn = DBManager.connect();
+//            ps = conn.prepareStatement(sql);
+//            HttpSession session = request.getSession();
+//            ps.setString(1, session.getAttribute("loginUserId").toString());
+//            ps.setString(2, imgUrl);
+//            session.setAttribute("loginUserProfileImg", imgUrl);
+//            return ps.executeUpdate();
+//
+//
+//
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//
+//        } finally {
+//            DBManager.close(conn, ps, null);
+//        }
+//        return 0;
+//    }
+
+    public int updateProfile(HttpServletRequest request) {
+        String imgUrl = request.getParameter("imgUrl");
+        System.out.println("받은 이미지 URL: " + imgUrl);
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+
+        try {
+            conn = DBManager.connect();
+            HttpSession session = request.getSession();
+            String userId = session.getAttribute("loginUserId").toString();
+
+            // 1. 먼저 UPDATE를 시도합니다. (기존 프사가 있는 유저)
+            String updateSql = "UPDATE profile SET profile_img_url = ? WHERE userid = ?";
+            ps = conn.prepareStatement(updateSql);
+            ps.setString(1, imgUrl);
+            ps.setString(2, userId);
+
+            int result = ps.executeUpdate();
+            System.out.println("profile update");
+
+            // 2. 만약 result가 0이라면? (기존 프사가 없어서 UPDATE된 항목이 없음 = 처음 프사 올리는 유저)
+            if (result == 0) {
+                ps.close(); // 쓰던 PreparedStatement 닫아주고
+
+                // 기존에 쓰시던 쿼리로 새로 INSERT 해줍니다.
+                String insertSql = "insert into profile values(? , ?)";
+                ps = conn.prepareStatement(insertSql);
+                ps.setString(1, userId);
+                ps.setString(2, imgUrl);
+
+                result = ps.executeUpdate();
+                System.out.println("profile add");
+            }
+
+            // 3. DB 저장이 성공(1)했다면 세션도 갱신해줍니다.
+            if (result > 0) {
+                session.setAttribute("loginUserProfileImg", imgUrl);
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(conn, ps, null);
+        }
+
+        return 0;
+    }
 }
 

@@ -72,8 +72,7 @@ function buildFeedCard(item, index) {
         border:0.5px solid #eee; overflow:hidden;
         display:flex; flex-direction:row;">
 
-        <div style="width:260px; min-width:260px; height:200px; overflow:hidden; cursor:pointer;"
-             onclick="triggerImgEdit(${index})">
+        <div style="width:260px; min-width:260px; height:200px; overflow:hidden;">
             <img id="detail-img-${index}"
                  src="${item.imgName}"
                  style="width:100%; height:100%; object-fit:cover; display:block;">
@@ -148,9 +147,6 @@ function onCommentClick(index) {}
 // =============================================
 // 이미지 수정
 // =============================================
-function triggerImgEdit(index) {
-    document.getElementById(`img-input-${index}`).click();
-}
 
 function applyImgEdit(index, event) {
     const file = event.target.files[0];

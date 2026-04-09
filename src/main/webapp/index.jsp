@@ -53,10 +53,24 @@
 
                     <%-- 🚨 [수정] 깔끔하게 클래스만 부여한 일촌 버튼 영역 --%>
                     <div class="friend-btn-wrapper">
-                        <button id="btn-friend-action" class="friend-action-btn" style="display:none;" onclick="handleFriendAction()"></button>
+                        <button id="btn-friend-action" class="friend-action-btn" style="display:none;"
+                                onclick="handleFriendAction()"></button>
                     </div>
-
-                    <div class="profile-photo">🌬️</div>
+                    <div class="profile-photo" id="profile-photo"
+                         style="overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                        <c:choose>
+                            <%-- 세션에 프로필 이미지 URL이 있을 경우 --%>
+                            <c:when test="${not empty sessionScope.loginUserProfileImg}">
+                                <img src="${sessionScope.loginUserProfileImg}"
+                                     alt="프로필 사진"
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 5px;">
+                            </c:when>
+                            <%-- 세션에 값이 없을 경우 (기본값) --%>
+                            <c:otherwise>
+                                🌬️
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                     <div class="profile-name" id="profile-name" style="visibility:hidden;"></div>
                     <div class="profile-mood">
                         햇살 가득한 오후,<br/>기분 좋은 바람... 🍃<br/>
@@ -207,7 +221,7 @@
                         <img id="phone-thumb-blur" src="" alt="">
 
                         <img id="phone-thumb" src="https://img.youtube.com/vi//mqdefault.jpg"
-                             alt="현재 재생 중 썸네일" />
+                             alt="현재 재생 중 썸네일"/>
                     </div>
 
                     <a id="yt-link" href="#" target="_blank" class="phone-yt-link">▶ YouTube에서 보기</a>
