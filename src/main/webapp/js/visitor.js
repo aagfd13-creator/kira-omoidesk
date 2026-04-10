@@ -3,13 +3,17 @@ let globalCurrentPage = 1;
 // =========================================================================
 // [핵심 함수] 현재 미니홈피의 주인이 누구인지(ownerPk) 알아내는 공통 함수
 // =========================================================================
+
+
 function getTargetOwnerPk() {
     // 1. 파도타기 중인지 확인 (세션 스토리지에 남의 PK가 메모되어 있는지 확인)
-    const savedOwnerPk = sessionStorage.getItem("currentHostId");
-
+    let savedOwnerPk = sessionStorage.getItem("currentHostId");
+    if(savedOwnerPk == null || savedOwnerPk ==""){
+        savedOwnerPk = loginUserId;
+    }
     // 2. 메모가 있다면 파도타기 중(남의 홈피)이므로 그 사람의 PK를 반환하고,
     //    메모가 없다면 내 홈피이므로 JSP에 선언해둔 내 전역변수(loginUserPk)를 반환한다.
-    return savedOwnerPk ? savedOwnerPk : loginUserPk;
+    return savedOwnerPk ;
 }
 
 // =========================================================================
@@ -93,7 +97,7 @@ function fetchVisitors(page) {
 // =========================================================================
 function loadRecentVisitors() {
     const currentOwnerPk = getTargetOwnerPk();
-
+    console.log("현재 홈피의 id는 "+currentOwnerPk);
     if (!currentOwnerPk) return;
 
     const noCache = new Date().getTime();
@@ -125,7 +129,7 @@ function loadRecentVisitors() {
                     li.innerHTML = `
                     <span style="display:flex; align-items:center; gap:5px;">
                         <span style="font-size: 11px;">${emoji}</span>
-                        <strong style="cursor:pointer;" onclick="goSearchMain('${v.v_writer_pk}', '${v.v_writer_nickname}')">${v.v_writer_nickname}</strong>
+                        <strong style="cursor:pointer;" onclick="goSearchMain('${v.v_writer_pk}', '${v.v_writer_nickname}')"> ${v.v_writer_nickname}</strong>
                     </span>
                     <span class="v-date-small">${v.v_date}</span>
                 `;

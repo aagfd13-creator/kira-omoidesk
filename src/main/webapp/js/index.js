@@ -108,7 +108,8 @@ function loadPage(url) {
     const savedOwnerId = sessionStorage.getItem("currentHostId");
     const targetOwnerId = savedOwnerId ? savedOwnerId : loginUserId;
 
-    let fetchUrl = url + (url.includes('?') ? '&' : '?') + 'host_id=' + targetOwnerId;
+
+    let fetchUrl = url + (url.includes('?') ? '&' : '?') + 'host_id=' + targetOwnerId ;
 
     fetch(fetchUrl)
         .then((res) => {

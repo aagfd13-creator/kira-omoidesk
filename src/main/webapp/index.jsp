@@ -106,7 +106,7 @@
                         </div>
                         <div
                                 class="menu-item ${content eq 'pic/pic.jsp' ? 'active' : ''}"
-                                data-src="${pageContext.request.contextPath}/photo?ajax=true"
+                                data-src="${pageContext.request.contextPath}/photo/photo.jsp"
                         >
                             사진첩
                         </div>
