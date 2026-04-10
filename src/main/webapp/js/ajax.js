@@ -9,9 +9,9 @@
  * @param {string} url  - data-src 값 (예: /diary?ajax=true)
  */
 async function switchTab(url) {
-    const container  = document.getElementById('notebook-content');
-    const notebook   = document.getElementById('notebook');
-    const loadingEl  = document.getElementById('nb-loading');
+    const container = document.getElementById('notebook-content');
+    const notebook = document.getElementById('notebook');
+    const loadingEl = document.getElementById('nb-loading');
 
     // ── 1. 로딩 표시 ──
     container.innerHTML = '';
@@ -31,7 +31,7 @@ async function switchTab(url) {
     // ── 4. fetch 요청 ──
     try {
         const response = await fetch(url, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            headers: {'X-Requested-With': 'XMLHttpRequest'}
         });
 
         if (!response.ok) {
@@ -53,17 +53,6 @@ async function switchTab(url) {
             oldScript.replaceWith(newScript);
         });
 
-// ✅ ✅ 여기로 이동 (핵심)
-        if (url.includes('/bgm')) {
-            // 약간 딜레이 주면 더 안정적
-            setTimeout(() => {
-                if (typeof renderQueue === 'function') renderQueue();
-                if (typeof window.onTrackChanged === 'function') {
-                    window.onTrackChanged(window.currentIndex);
-                }
-            }, 0);
-        }
-
     } catch (err) {
         container.innerHTML = `
             <div class="nb-error">
@@ -84,11 +73,32 @@ document.addEventListener('click', e => {
         target &&
         (target.classList.contains('nb-tab') ||
             target.classList.contains('menu-item') ||
-        target.classList.contains('phone-screen') ||
-        target.classList.contains('phone-home') ||
-        target.id === 'bgm-title')
+            target.classList.contains('phone-screen') ||
+            target.classList.contains('phone-home') ||
+            target.id === 'bgm-title-phone')
     ) {
         e.preventDefault();
+
+        // ✅ bgm-title-phone: 내 재생목록 — sessionStorage는 유지
+        if (target.id === 'bgm-title-phone') {
+            switchTab(target.dataset.src);
+            if (typeof loadPlaylist === 'function') {
+                loadPlaylist(window.loginUserPk || '');  // 내 PK 직접 지정
+            }
+            return;
+        }
+
+// ✅ phone-home: 페이지 주인 재생목록
+        if (target.classList.contains('phone-home')) {
+            const currentHostId = sessionStorage.getItem('currentHostId');
+            const targetPk = currentHostId || window.loginUserPk || '';
+            switchTab(target.dataset.src);
+            if (typeof loadPlaylist === 'function') {
+                loadPlaylist(targetPk);
+            }
+            return;
+        }
+
         switchTab(target.dataset.src);
     }
 });
@@ -101,11 +111,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const initialSrc = '${not empty content ? "/home?ajax=true" : "/home?ajax=true"}';
     // content 값에 따라 올바른 ajax URL로 매핑
     const contentToUrl = {
-        'main.jsp':            '/home?ajax=true',
-        'diary/diary.jsp':     '/diary?ajax=true',
-        'photo/photo.jsp':         '/photo?ajax=true',
+        'main.jsp': '/home?ajax=true',
+        'diary/diary.jsp': '/diary?ajax=true',
+        'photo/photo.jsp': '/photo?ajax=true',
         'board/board.jsp': '/board?ajax=true',
-        'bgm/bgm.jsp':     '/bgm?ajax=true',
+        'bgm/bgm.jsp': '/bgm?ajax=true',
     };
     const startUrl = contentToUrl['${content}'] || '/home?ajax=true';
     switchTab(startUrl);

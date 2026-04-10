@@ -73,7 +73,7 @@ function updateIndexNowPlaying() {
 
   const ytLink = document.getElementById("yt-link");
   const bgmTitleMp3 = document.getElementById("bgm-title-mp3");
-  const bgmTitlePhone = document.getElementById("bgm-title-phone");
+  // const bgmTitlePhone = document.getElementById("bgm-title-phone");
 
   // ✅ 썸네일 업데이트 (메인과 배경 둘 다)
   if (phoneThumb) phoneThumb.src = thumbUrl;
@@ -82,7 +82,7 @@ function updateIndexNowPlaying() {
   if (ytLink)
     ytLink.href = "https://www.youtube.com/watch?v=" + track.youtubeId;
   if (bgmTitleMp3) bgmTitleMp3.textContent = "♪ " + track.title;
-  if (bgmTitlePhone) bgmTitlePhone.textContent = "♪ " + track.title;
+  // if (bgmTitlePhone) bgmTitlePhone.textContent = "♪ " + track.title;
 
   const cur =
     ytPlayer && typeof ytPlayer.getCurrentTime === "function"
@@ -253,48 +253,54 @@ function initPlayer() {
 }
 
 // ── 플레이리스트 로드 ─────────────────────────────────────────
-function loadPlaylist(userPk) {
-  currentIndex = restoreCurrentIndex(playlist.length);
-  /*
-        // 1) 비로그인 사용자 → 기본 재생목록
-        if (!userPk || userPk.trim() === '') {
-            window.playlist = window.defaultPlaylist.map(track => ({ ...track }));
-            window.isDefaultPlaylist = true;
-            window.currentIndex = restoreCurrentIndex(window.playlist.length); // playlist 확정 후 복원
-            window.fetchDone = true;
-            if (apiReady) initPlayer();
-            return;
+function loadPlaylist(targetPk) {
+  const myPk = window.loginUserPk || '';
+  const isActuallyMe = (!targetPk || targetPk === myPk);
+
+  // ✅ 1. 현재 재생 중인 대상(PK)이 바뀐 건지 확인
+  // 기존에 window.currentPlayingPk 같은 변수가 없다면 새로 정의해서 비교합니다.
+  const currentPk = isActuallyMe ? 'MY' : targetPk;
+  const isSameTarget = (window.lastLoadedPk === currentPk);
+
+  window.isMyPlaylist = isActuallyMe;
+  window.lastLoadedPk = currentPk; // 현재 로드한 대상 저장
+
+  const url = isActuallyMe
+      ? '/api/bgm'
+      : `/api/visitor/bgm?ownerPk=${targetPk}`;
+
+  fetch(url)
+      .then(r => r.json())
+      .then(tracks => {
+        if (!tracks || tracks.length === 0) {
+          window.playlist = dummyPlaylist;
+          window.isDefaultPlaylist = true;
+          window.currentHostNickname = null;
+        } else {
+          window.playlist = tracks;
+          window.isDefaultPlaylist = false;
+          window.currentHostNickname = tracks[0].userNickname;
         }
-    */
-  // 2) 로그인 사용자 → 무조건 DB 조회
-  fetch("/api/bgm")
-    .then((r) => r.json())
-    .then((tracks) => {
-      // 3) DB에 재생목록이 0개면 기본 재생목록
-      if (!tracks || tracks.length === 0) {
-        playlist = dummyPlaylist;
-        window.isDefaultPlaylist = true;
-        currentIndex = restoreCurrentIndex(dummyPlaylist.length);
-      } else {
-        // 4) DB에 내 곡이 있으면 개인 재생목록
-        playlist = tracks;
-        window.isDefaultPlaylist = false;
-        currentIndex = restoreCurrentIndex(tracks.length);
-      }
 
-      fetchDone = true;
-      if (apiReady) initPlayer();
-    })
-    .catch((err) => {
-      console.error("플레이리스트 로드 실패:", err);
+        window.fetchDone = true;
 
-      // 5) DB 조회 실패 시 기본 재생목록으로 폴백
-      playlist = dummyPlaylist;
-      window.isDefaultPlaylist = true;
-      currentIndex = restoreCurrentIndex(dummyPlaylist.length);
-      fetchDone = true;
-      if (apiReady) initPlayer();
-    });
+        // ✅ 2. UI는 매번 그리되, 재생 위치는 유지
+        if (typeof renderQueue === 'function') renderQueue();
+
+        // ✅ 3. 핵심 수정: 동일한 사람의 목록을 다시 여는 거라면 재생 명령을 내리지 않음
+        if (isSameTarget) {
+          console.log("이미 같은 목록 재생 중 - 상태 유지");
+          return;
+        }
+
+        // 새로운 목록일 때만 처음부터 재생
+        window.currentIndex = 0;
+        if (window.ytPlayer && window.playerReady) {
+          window.ytPlayer.loadVideoById(window.playlist[0].youtubeId);
+        } else if (window.apiReady) {
+          initPlayer();
+        }
+      });
 }
 
 // ── YouTube API 준비 콜백 ─────────────────────────────────────

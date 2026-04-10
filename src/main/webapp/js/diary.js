@@ -1,109 +1,145 @@
-
-document.addEventListener("DOMContentLoaded", function () {
-  // 1. 처음 켜졌을 때 메인 화면(main.jsp) 로드
-  loadPage("main.jsp");
-
-  // 2. 메뉴/탭 버튼 클릭 이벤트 등록
-  document.querySelectorAll(".menu-item, .nb-tab").forEach((button) => {
-    button.addEventListener("click", function () {
-      const targetUrl = this.getAttribute("data-src");
-
-      // 클릭한 탭 색상 활성화
-      document
-        .querySelectorAll(".menu-item, .nb-tab")
-        .forEach((el) => el.classList.remove("active"));
-
-      // 왼쪽 메뉴와 상단 탭 모두 동기화 처리 (선택사항)
-      const correspondingTabs = document.querySelectorAll(
-        `[data-src="${targetUrl}"]`,
-      );
-      correspondingTabs.forEach((el) => el.classList.add("active"));
-
-      loadPage(targetUrl);
-    });
-  });
-});
-
-
-
-// 다이어리 내용을 비동기(fetch)로 불러와서 화면을 갈아끼우는 함수
-function loadDiary(url = "/diary?ajax=true") {
-  if (!url.includes("ajax=true")) {
-    url += (url.includes("?") ? "&" : "?") + "ajax=true";
-  }
-
-  fetch(url)
-    .then((response) => response.text())
-    .then((html) => {
-      document.getElementById("notebook-content").innerHTML = html;
-
-      // ★ 새로 추가된 스크롤 마법 ★
-      // 만약 URL에 'd=' (날짜 파라미터)가 있어서 일기 목록이 열렸다면?
-      if (url.includes("d=")) {
-        // 화면에 뜬 다이어리 보드(목록)를 찾아서
-        const board = document.querySelector(".diary-board");
-        if (board) {
-          // 그 위치로 부드럽게 스르륵 스크롤 이동!
-          board.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }
-    })
-    .catch((error) => console.error("다이어리 로드 실패:", error));
-}
-
-// 일기 작성 폼 데이터를 fetch로 서버에 몰래 보내는 함수
-function submitDiaryForm() {
-    // 1. 괄호 안을 비우고, 폼을 ID로 직접 낚아챕니다!
-    const form = document.getElementById('diaryWriteForm');
-
-    if (!form) {
-        console.error("폼을 찾을 수 없습니다! JSP에 id='diaryWriteForm'이 있는지 확인하세요.");
-        return;
+/**
+ * [1] 다이어리 내용을 비동기로 불러와서 화면을 갈아끼우는 핵심 함수
+ */
+function loadDiary(url = "diary") {
+    // 1. URL에 ajax 파라미터가 없으면 붙여줌 (상태 유지용)
+    if (!url.includes("ajax=true")) {
+        url += (url.includes("?") ? "&" : "?") + "ajax=true";
     }
 
-    // 2. 폼 안에 적힌 데이터(제목, 내용, 날짜 등)를 싹 긁어모음
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData); // 자바가 읽기 편하게 변환
+    // 2. 주소창 앞에 슬래시(/)가 없어서 발생하는 404 방지 (상대경로 이슈 해결)
+    // 인텔리제이 context path가 '/'일 때 가장 안전한 방식입니다.
+    console.log("📬 요청 주소:", url);
 
-    // 3. 서버의 'diary-write' 주소로 데이터를 슝 보냄
+    fetch(url)
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error(`서버 응답 에러 (상태코드: ${response.status})`);
+            }
+            // ★ 핵심: 반드시 .text()로 받아서 HTML로 처리
+            return response.text();
+        })
+        .then((html) => {
+            const contentArea = document.getElementById("notebook-content");
+            if (contentArea) {
+                // 기존 내용을 싹 비우고 새 HTML 주입
+                contentArea.innerHTML = html;
+
+                // 페이지 상단으로 스크롤 이동 (부드럽게)
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+
+            // 특정 날짜 목록인 경우 해당 위치로 스크롤 (성현님 기존 로직 유지)
+            if (url.includes("d=")) {
+                const board = document.querySelector(".diary-board");
+                if (board) {
+                    board.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+        })
+        .catch((error) => {
+            console.error("❌ 다이어리 로드 실패:", error);
+            // 에러 시 사용자에게 알림 (선택 사항)
+            // alert("화면을 불러오는 중 오류가 발생했습니다.");
+        });
+}
+
+/**
+ * [2] 일기 작성 (Create)
+ */
+function submitDiaryForm() {
+    const form = document.getElementById('diaryWriteForm');
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+
     fetch('diary-write', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
         body: params
     })
         .then(response => response.text())
-        .then(data => {
-            // 4. 작성이 끝났으면, 방금 글을 쓴 그 날짜의 일기 목록으로 화면을 쓱 바꿔줌
+        .then(() => {
+            // 등록 후 해당 날짜 목록으로 이동
             const y = formData.get('d_year');
             const m = formData.get('d_month');
             const d = formData.get('d_date');
-
             loadDiary(`diary?y=${y}&m=${m}&d=${d}`);
         })
-        .catch(error => console.error("일기 등록 통신 실패:", error));
+        .catch(error => console.error("일기 등록 실패:", error));
 }
 
-// 일기 수정 폼 데이터를 서버로 몰래 쏴주는 함수
+/**
+ * [3] 일기 수정 (Update)
+ */
 function updateDiaryForm() {
     const form = document.getElementById('diaryUpdateForm');
+    if (!form) return;
+
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
 
-    // diary-update 주소로 수정된 내용 쏘기 (POST)
     fetch('diary-update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
         body: params
     })
         .then(response => response.text())
-        .then(data => {
-            // 수정이 무사히 끝났으면, 방금 고친 그 글의 '상세 보기' 화면으로 다시 이동!
+        .then(() => {
             const no = formData.get('no');
             const y = formData.get('d_year');
             const m = formData.get('d_month');
             const d = formData.get('d_date');
-
+            // 수정 완료 후 상세 페이지 재로드
             loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
         })
-        .catch(error => console.error("일기 수정 통신 실패:", error));
+        .catch(error => console.error("일기 수정 실패:", error));
+}
+
+/**
+ * [4] 댓글 등록
+ */
+function submitReply(no, y, m, d) {
+    const form = document.getElementById('replyWriteForm');
+    if (!form) return;
+
+    const input = form.querySelector('input[name="r_txt"]');
+    if (!input.value.trim()) {
+        alert("댓글 내용을 입력해주세요! 😊");
+        input.focus();
+        return;
+    }
+
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+
+    fetch('diary-reply-write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: params
+    })
+        .then(response => response.text())
+        .then(() => {
+            // 댓글 창 비우기
+            input.value = "";
+            // 상세 페이지 새로고침
+            loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
+        })
+        .catch(error => console.error("댓글 등록 실패:", error));
+}
+
+/**
+ * [5] 댓글 삭제
+ */
+function deleteReply(r_no, d_no, y, m, d) {
+    if (!confirm("이 댓글을 정말 삭제할까요? 🗑️")) return;
+
+    fetch(`diary-reply-delete?r_no=${r_no}`)
+        .then(response => response.text())
+        .then(() => {
+            // 삭제 후 상세 페이지 새로고침
+            loadDiary(`diary-detail?no=${d_no}&y=${y}&m=${m}&d=${d}`);
+        })
+        .catch(error => console.error("댓글 삭제 실패:", error));
 }

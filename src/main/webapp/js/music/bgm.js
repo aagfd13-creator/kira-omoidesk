@@ -22,42 +22,61 @@ function updateNowPlaying(track, index) {
 function renderQueueHeader() {
     const header = document.getElementById('bgm-queue-header');
     const wrap = document.querySelector('.bgm-wrap');
-    if (!header) return;
+    if (!header || !wrap) return;
 
-    // 1. 기존 JSP에 정적으로 선언된 버튼 (id="bgm-add-btn") 대응
-    const staticAddBtn = document.getElementById('bgm-add-btn');
-    if (staticAddBtn) {
-        staticAddBtn.onclick = openBgmModal;
-    }
+    // ✅ loadPlaylist()에서 확정한 권한값 사용
+    const isMyPlaylist = !!window.isMyPlaylist;
+    const isVisitor = !isMyPlaylist;
+
+    const displayName = isVisitor
+        ? (window.currentHostNickname || sessionStorage.getItem("currentHostNick") || "주인")
+        : (window.loginUserNickname || "내");
 
     if (window.isDefaultPlaylist) {
         wrap.classList.remove('theme-personal');
         wrap.classList.add('theme-default');
-        // 2. 동적으로 생성되는 헤더 안의 버튼에도 onclick 연결 확인
+
         header.innerHTML = `
             <div class="bgm-queue-status default">
-                <span class="bgm-queue-status-label">🎵 기본 BGM</span>
-                <span class="bgm-queue-hint">나만의 재생목록을 만들어봐요</span>
-                <button class="bgm-add-btn" onclick="openBgmModal()">+ 추가</button>
+                <span class="bgm-queue-status-label">
+                    🎵 ${isVisitor ? displayName + '님의 BGM' : '기본 BGM'}
+                </span>
+                <span class="bgm-queue-hint">
+                    ${isVisitor ? '등록된 곡이 없어 기본 곡을 재생합니다.' : '나만의 재생목록을 만들어봐요'}
+                </span>
+                ${isMyPlaylist ? '<button class="bgm-add-btn" id="bgm-add-btn">+ 추가</button>' : ''}
             </div>
         `;
-    } else {
-        wrap.classList.remove('theme-default');
-        wrap.classList.add('theme-personal');
-        // 기존 추가 버튼 옆에 셔플 버튼 추가
-        header.innerHTML = `
-    <div class="bgm-queue-header-top">
-        <div class="bgm-queue-status personal">
-            <span class="bgm-queue-status-label">✨ 내 플레이리스트</span>
-            <span class="bgm-queue-count">${window.playlist.length}곡</span>
+
+        if (isMyPlaylist) {
+            const addBtn = document.getElementById('bgm-add-btn');
+            if (addBtn) addBtn.onclick = openBgmModal;
+        }
+        return;
+    }
+
+    wrap.classList.remove('theme-default');
+    wrap.classList.add('theme-personal');
+
+    header.innerHTML = `
+        <div class="bgm-queue-status-row">
+            <div class="bgm-queue-status personal">
+                <span class="bgm-queue-status-label">✨ ${displayName}${isVisitor ? '님의' : ''} 플레이리스트</span>
+                <span class="bgm-queue-count">${window.playlist.length}곡</span>
+            </div>
+            <div class="bgm-queue-actions">
+                ${isMyPlaylist ? '<button class="bgm-shuffle-btn" id="bgm-shuffle-btn">🔀 셔플</button>' : ''}
+                ${isMyPlaylist ? '<button class="bgm-add-btn" id="bgm-add-btn">+ 추가</button>' : ''}
+            </div>
         </div>
-        <div class="bgm-queue-actions">
-            <button class="bgm-shuffle-btn" id="bgm-shuffle-btn">🔀 셔플</button>
-        </div>
-    </div>
-`;
-        document.getElementById('bgm-shuffle-btn').addEventListener('click', shufflePlaylist);
-        document.getElementById('bgm-add-btn').addEventListener('click', openBgmModal);
+    `;
+
+    if (isMyPlaylist) {
+        const shuffleBtn = document.getElementById('bgm-shuffle-btn');
+        const addBtn = document.getElementById('bgm-add-btn');
+
+        if (shuffleBtn) shuffleBtn.onclick = shufflePlaylist;
+        if (addBtn) addBtn.onclick = openBgmModal;
     }
 }
 
@@ -71,30 +90,31 @@ function renderQueue() {
     if (!container) return;
 
     container.innerHTML = '';
-    renderQueueHeader();
+    if (typeof renderQueueHeader === "function") {
+        renderQueueHeader();
+    }
+
+    // ✅ 관리 버튼 노출 조건: (내 플레이리스트일 때) AND (더미 데이터가 아닐 때)
+    const canEdit = !!window.isMyPlaylist && !window.isDefaultPlaylist;
 
     window.playlist.forEach((track, i) => {
-        if (!track.youtubeId) return; // ✅ 빈 youtubeId 방어
+        if (!track.youtubeId) return;
 
         const item = document.createElement('div');
         item.className = 'bgm-track-item' + (i === window.currentIndex ? ' active' : '');
 
-        // ✅ orderBtns을 여기서만 만들고 아래 innerHTML에 ${orderBtns}으로 삽입
-        const orderBtns = window.isDefaultPlaylist ? '' : `
-    <div class="bgm-track-order">
-        <button class="bgm-track-move bgm-track-move-up" ${i === 0 ? 'disabled' : ''}>▲</button>
-        <button class="bgm-track-move bgm-track-move-down" ${i === playlist.length - 1 ? 'disabled' : ''}>▼</button>
-    </div>
-`;
+        const orderBtns = canEdit ? `
+            <div class="bgm-track-order">
+                <button class="bgm-track-move bgm-track-move-up" ${i === 0 ? 'disabled' : ''}>▲</button>
+                <button class="bgm-track-move bgm-track-move-down" ${i === window.playlist.length - 1 ? 'disabled' : ''}>▼</button>
+            </div>
+        ` : '';
 
-        // ✅ deleteBtn도 조건부로만
-        const deleteBtn = window.isDefaultPlaylist ? '' : '<button class="bgm-track-delete" title="삭제">✕</button>';
+        const deleteBtn = canEdit ? '<button class="bgm-track-delete" title="삭제">✕</button>' : '';
 
         item.innerHTML = `
             <div class="bgm-track-num">${i + 1}</div>
-            <div class="bgm-playing-icon">
-                <span></span><span></span><span></span>
-            </div>
+            <div class="bgm-playing-icon"><span></span><span></span><span></span></div>
             <div class="bgm-track-thumb">
                 <img src="https://img.youtube.com/vi/${track.youtubeId}/mqdefault.jpg" alt="${track.title}">
             </div>
@@ -106,32 +126,42 @@ function renderQueue() {
             ${deleteBtn}
         `;
 
-        // ✅ 트랙 클릭 → 재생 (버튼 클릭은 무시)
         item.addEventListener('click', (e) => {
-            if (e.target.closest('.bgm-track-delete')) return;
-            if (e.target.closest('.bgm-track-move')) return;
+            if (e.target.closest('.bgm-track-delete') || e.target.closest('.bgm-track-move')) return;
             if (typeof window.playTrack === 'function') window.playTrack(i);
         });
 
-        // ✅ 삭제 버튼 이벤트
-        const delBtn = item.querySelector('.bgm-track-delete');
-        if (delBtn) {
-            delBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                deleteTrack(track.youtubeId, item, i);
-            });
+        if (canEdit) {
+            const delBtn = item.querySelector('.bgm-track-delete');
+            if (delBtn) {
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof deleteTrack === "function") deleteTrack(track.youtubeId, item, i);
+                });
+            }
+
+            const upBtn = item.querySelector('.bgm-track-move-up');
+            const downBtn = item.querySelector('.bgm-track-move-down');
+
+            if (upBtn) {
+                upBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof moveTrack === "function") moveTrack(i, 'up');
+                });
+            }
+            if (downBtn) {
+                downBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (typeof moveTrack === "function") moveTrack(i, 'down');
+                });
+            }
         }
-
-        // ✅ 순서변경 버튼 이벤트 (onclick 문자열 대신 addEventListener로)
-        const upBtn = item.querySelector('.bgm-track-move-up');
-        const downBtn = item.querySelector('.bgm-track-move-down');
-        if (upBtn) upBtn.addEventListener('click', (e) => { e.stopPropagation(); moveTrack(i, 'up'); });
-        if (downBtn) downBtn.addEventListener('click', (e) => { e.stopPropagation(); moveTrack(i, 'down'); });
-
         container.appendChild(item);
     });
 
-    updateNowPlaying(window.playlist[window.currentIndex], window.currentIndex);
+    if (typeof updateNowPlaying === "function") {
+        updateNowPlaying(window.playlist[window.currentIndex], window.currentIndex);
+    }
 }
 
 // ✅ 추가: 삭제 요청 함수
@@ -298,26 +328,50 @@ async function bgmConfirmAdd() {
     }
 }
 // ── 재생목록 리로드 부분 수정 (wasDefault 정의) ─────────────
-async function reloadPlaylist() {
-    const wasDefault = window.isDefaultPlaylist; // 현재 상태 저장
+function reloadPlaylist(targetPk) {
+    const url = targetPk ? `/api/visitor/bgm?ownerPk=${targetPk}` : "/api/bgm";
 
-    try {
-        const res = await fetch('/api/bgm');
-        const data = await res.json();
-
-        if (data && data.length > 0) {
-            window.playlist = data;
-            window.isDefaultPlaylist = false;
-
-            // 처음으로 곡을 추가해 '기본'에서 '개인'으로 전환된 경우 즉시 재생
-            if (wasDefault && typeof window.playTrack === 'function') {
-                window.playTrack(0);
+    fetch(url)
+        .then((r) => r.json())
+        .then((tracks) => {
+            // 1. 데이터 할당 (없으면 더미)
+            if (!tracks || tracks.length === 0) {
+                window.playlist = dummyPlaylist;
+                window.isDefaultPlaylist = true;
+                window.currentHostNickname = null;
+            } else {
+                window.playlist = tracks;
+                window.isDefaultPlaylist = false;
+                // 첫 번째 곡의 VO에서 닉네임 추출
+                window.currentHostNickname = tracks[0].userNickname;
             }
-        }
-        renderQueue();
-    } catch (e) {
-        console.error("재생목록 로드 실패:", e);
-    }
+
+            // 2. 인덱스 초기화 및 상태 플래그 설정
+            // 타인 홈피 방문 시 무조건 0번부터 시작하도록 고정
+            window.currentIndex = 0;
+            window.fetchDone = true;
+
+            // 3. UI 렌더링 (헤더 닉네임 등)
+            if (typeof renderQueue === "function") renderQueue();
+
+            // 4. 🚨 재생 실행 로직 (핵심)
+            if (window.ytPlayer && typeof window.ytPlayer.loadVideoById === 'function') {
+                // 이미 플레이어가 있으면 첫 곡을 로드하고 재생
+                const firstTrack = window.playlist[0];
+                window.ytPlayer.loadVideoById(firstTrack.youtubeId);
+                if (typeof updateIndexNowPlaying === 'function') updateIndexNowPlaying(0);
+            } else if (window.apiReady) {
+                // 플레이어가 없으면 새로 생성
+                initPlayer();
+            }
+        })
+        .catch((err) => {
+            console.error("BGM 로드 에러:", err);
+            window.playlist = dummyPlaylist;
+            window.isDefaultPlaylist = true;
+            window.fetchDone = true;
+            if (window.apiReady) initPlayer();
+        });
 }
 
 // ── 메시지 표시 헬퍼 ────────────────────────────

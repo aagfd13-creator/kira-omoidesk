@@ -29,7 +29,7 @@ function updatePhoneScreen() {
 
     if (phoneThumb) phoneThumb.src       = 'https://img.youtube.com/vi/' + track.youtubeId + '/mqdefault.jpg';
     if (ytLink)     ytLink.href          = 'https://www.youtube.com/watch?v=' + track.youtubeId;
-    if (titlePhone) titlePhone.textContent = '♪ ' + track.title;
+    // if (titlePhone) titlePhone.textContent = '♪ ' + track.title;
 }
 
 // ── player.js의 updateIndexNowPlaying에 훅 추가 ──────────────────

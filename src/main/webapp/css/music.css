@@ -494,6 +494,14 @@ body {
     font-weight: bold;
 }
 
+.bgm-queue-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 4px;  /* 양 끝 여백 */
+}
+
 .bgm-queue-hint {
     font-size: 11px;
     color: #c8b8a8;
@@ -572,6 +580,6 @@ body {
 /* 추가/셔플 버튼 묶음 */
 .bgm-queue-actions {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     align-items: center;
 }

@@ -300,6 +300,36 @@ public class UserDAO {
                 session.setAttribute("loginUserNickname", rs.getString("u_nickname"));
                 session.setAttribute("loginUserEmail", rs.getString("u_email"));
 
+                // =============================tk 수정 : 로그인 시 프사를 보여주기 위한 이미지url 세션으로 가져오기
+                PreparedStatement pstmtProfile = null;
+                ResultSet rsProfile = null;
+                try {
+                    // user_profile 테이블에서 해당 유저의 프사 URL 조회
+                    String profileSql = "SELECT profile_img_url FROM profile WHERE userid = ?";
+                    pstmtProfile = conn.prepareStatement(profileSql);
+                    pstmtProfile.setString(1, rs.getString("u_id")); // 방금 로그인 성공한 아이디 사용
+                    rsProfile = pstmtProfile.executeQuery();
+
+                    if (rsProfile.next()) {
+                        // DB에 프사가 있으면 세션에 저장
+                        session.setAttribute("loginUserProfileImg", rsProfile.getString("profile_img_url"));
+                    } else {
+                        // 없으면 null (index.jsp에서 이모지로 처리됨)
+                        session.setAttribute("loginUserProfileImg", null);
+                    }
+                } catch (Exception e) {
+                    System.out.println("프로필 사진 로드 중 오류 발생");
+                    e.printStackTrace();
+                } finally {
+                    // 서브 쿼리용 자원 반납
+                    if (rsProfile != null) try { rsProfile.close(); } catch(Exception e) {}
+                    if (pstmtProfile != null) try { pstmtProfile.close(); } catch(Exception e) {}
+                }
+                // =========================================================
+
+
+
+
                 return json(true, "로그인 성공", "/main");
             }
 
@@ -759,4 +789,5 @@ public class UserDAO {
             DBManager.close(conn, pstmt, rs);
         }
     }
+
 }

@@ -13,7 +13,7 @@ function loadPhoto() {
         .then(res => res.json())
         .then(data => {
             photoData = data;
-            renderFeedView(); // 통합된 피드 뷰 호출
+            renderFeedView();
         })
         .catch(err => {
             container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">사진첩 로딩 실패 ㅠㅠ</div>';
@@ -22,7 +22,7 @@ function loadPhoto() {
 }
 
 // =============================================
-// [뷰 통합] 인스타그램식 피드 뷰 (Sticky 버그 수정)
+// 피드 뷰
 // =============================================
 function renderFeedView() {
     const container = document.getElementById('notebook-content');
@@ -30,13 +30,10 @@ function renderFeedView() {
     let html = `
         <div style="
             position:sticky; top:-15px; z-index:10;
-            /*margin : -20px -16px 0px -16px;*/
             background:#fff; border-bottom:1px solid #eee;
             padding:12px 16px; display:flex; justify-content:space-between; align-items:center;
             box-shadow:0 2px 6px rgba(0,0,0,0.06);">
-            
             <h2 style="margin:0; font-size:18px; color:#333; font-family:'Gaegu', cursive;">🖼️ My Photo Album</h2>
-            
             <button onclick="openAddModal()" style="
                 width:34px; height:34px; border-radius:50%;
                 border:2px solid #bbb; background:#fff;
@@ -48,144 +45,108 @@ function renderFeedView() {
         </div>
 
         <div style="font-family:'Gaegu', cursive; background:#f5f5f5; min-height:100%; padding-bottom:30px; padding-top:10px;">
-            <div style="display:flex; flex-direction:column; gap:0;">
+            <div style="display:flex; flex-direction:column; gap:16px; padding:0 16px;">
     `;
 
     if (photoData.length === 0) {
         html += `<div style="text-align:center; color:#bbb; padding:40px;">아직 사진이 없어요. + 버튼으로 추가해보세요!</div>`;
     }
 
-    // 데이터를 돌면서 카드 추가
     photoData.forEach((item, index) => {
         html += buildFeedCard(item, index);
     });
 
-    html += `</div></div>`; // 리스트 및 배경 닫는 태그
-
-    // 추가 모달 붙이기
+    html += `</div></div>`;
     html += buildAddModalHtml();
 
     container.innerHTML = html;
 }
 
 // =============================================
-// 피드 카드 1장 빌더 (호버 아이콘 제거)
+// 피드 카드 1장 빌더
 // =============================================
 function buildFeedCard(item, index) {
     return `
     <div id="detail-card-${index}" style="
-        background:#fff; margin:12px 16px; border-radius:12px;
-        box-shadow:0 2px 12px rgba(0,0,0,0.08); overflow:hidden;">
+        background:#fff; border-radius:12px;
+        border:0.5px solid #eee; overflow:hidden;
+        display:flex; flex-direction:row;">
 
-        <div style="
-            display:flex; justify-content:space-between; align-items:center;
-            padding:12px 16px; border-bottom:1px solid #f5f5f5;">
-            <span style="font-weight:bold; font-size:15px; color:#333;">👤 ${item.userId}</span>
-            <div style="display:flex; align-items:center; gap:12px;">
-                <span style="color:#bbb; font-size:12px;">📅 ${item.regDate}</span>
-                <button onclick="deletePhoto(${index})" style="
-                    background:none; border:none; font-size:18px;
-                    color:#ccc; cursor:pointer; line-height:1; padding:0;"
-                    onmouseover="this.style.color='#e55'"
-                    onmouseout="this.style.color='#ccc'">✕</button>
-            </div>
-        </div>
-
-        <div style="position:relative; cursor:pointer;" onclick="triggerImgEdit(${index})">
+        <div style="width:260px; min-width:260px; height:200px; overflow:hidden;">
             <img id="detail-img-${index}"
                  src="${item.imgName}"
-                 style="width:100%; max-height:420px; object-fit:cover; display:block;">
-            
+                 style="width:100%; height:100%; object-fit:cover; display:block;">
             <input type="file" id="img-input-${index}" accept="image/*"
                    style="display:none;" onchange="applyImgEdit(${index}, event)">
         </div>
 
-        <div style="padding:16px;">
-
-            <div id="title-view-${index}"
-                 onclick="startEditTitle(${index})"
-                 style="font-weight:bold; font-size:16px; color:#444;
-                        margin-bottom:8px; cursor:text;
-                        border-radius:4px; padding:2px 4px;"
-                 onmouseover="this.style.background='#fafafa'"
-                 onmouseout="this.style.background='transparent'">
-                ${item.title}
+        <div style="flex:1; padding:20px; display:flex; flex-direction:column;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                <div>
+                    <div style="font-size:11px; color:#c0b0a0; margin-bottom:4px;">📅 ${item.regDate}</div>
+                    <div id="title-view-${index}"
+                         style="font-size:16px; font-weight:bold; color:#444;
+                                border-left:3px solid #ffb3ba; padding-left:8px;">
+                        ${item.title}
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:11px; color:#bbb; font-weight:bold;">👤 ${item.userId}</span>
+                    <button onclick="deletePhoto(${index})" style="
+                        background:none; border:none; font-size:16px;
+                        color:#ccc; cursor:pointer; line-height:1; padding:0;"
+                        onmouseover="this.style.color='#e55'"
+                        onmouseout="this.style.color='#ccc'">✕</button>
+                </div>
             </div>
-            <input id="title-input-${index}" type="text" value="${item.title}"
-                   style="display:none; width:100%; font-size:16px; font-weight:bold;
-                          font-family:'Gaegu'; border:1px solid #ddd; border-radius:6px;
-                          padding:6px 8px; box-sizing:border-box; margin-bottom:8px;"
-                   onblur="saveTitle(${index})"
-                   onkeydown="if(event.key==='Enter') this.blur()">
 
             <div id="content-view-${index}"
-                 onclick="startEditContent(${index})"
-                 style="font-size:14px; color:#666; line-height:1.7;
-                        cursor:text; border-radius:4px; padding:2px 4px;
-                        min-height:40px; white-space:pre-wrap;"
-                 onmouseover="this.style.background='#fafafa'"
-                 onmouseout="this.style.background='transparent'">
-                ${item.content}
-            </div>
-            <textarea id="content-input-${index}"
-                      style="display:none; width:100%; font-size:14px; color:#666;
-                             font-family:'Gaegu'; border:1px solid #ddd; border-radius:6px;
-                             padding:6px 8px; box-sizing:border-box; resize:none; line-height:1.7;"
-                      rows="4"
-                      onblur="saveContent(${index})">${item.content}</textarea>
+                 style="font-size:13px; 
+                        color:#888; 
+                        line-height:1.6;
+                        border-top:1px dashed #eee; 
+                        padding:12px 0; /* 상하 패딩 조절 */
+                        margin-top:8px;
+                        white-space:pre-wrap;
+                        text-align:left; /* 왼쪽 정렬 명시 */
+                        height:85px; /* 고정 높이를 주어야 스크롤 판단 기준이 생깁니다 */
+                        overflow-y:auto; /* 내용이 넘칠 때만 스크롤 생성 */
+                        scrollbar-width: thin; /* (선택) 스크롤바를 얇게 */
+                        ">${item.content}</div>
 
+            <div style="display:flex; align-items:center; gap:16px;
+                        border-top:1px dashed #eee; padding-top:12px; margin-top:auto;">
+                <button onclick="onLikeClick(${index})" style="
+                    background:none; border:none; cursor:pointer;
+                    display:flex; align-items:center; gap:5px;
+                    color:#e88; font-size:13px; font-family:'Gaegu'; padding:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e88" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                    <span id="like-count-${index}">0</span>
+                </button>
+                <button onclick="onCommentClick(${index})" style="
+                    background:none; border:none; cursor:pointer;
+                    display:flex; align-items:center; gap:5px;
+                    color:#aaa; font-size:13px; font-family:'Gaegu'; padding:0;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span id="comment-count-${index}">0</span>
+                </button>
+            </div>
         </div>
     </div>
     `;
 }
 
-// =============================================
-// 인라인 편집: 제목
-// =============================================
-function startEditTitle(index) {
-    document.getElementById(`title-view-${index}`).style.display = 'none';
-    const input = document.getElementById(`title-input-${index}`);
-    input.style.display = 'block';
-    input.focus();
-    input.select();
-}
-
-function saveTitle(index) {
-    const newVal = document.getElementById(`title-input-${index}`).value.trim();
-    if (newVal) photoData[index].title = newVal;
-    document.getElementById(`title-input-${index}`).style.display = 'none';
-    const view = document.getElementById(`title-view-${index}`);
-    view.textContent = photoData[index].title;
-    view.style.display = 'block';
-}
-
-// =============================================
-// 인라인 편집: 내용
-// =============================================
-function startEditContent(index) {
-    document.getElementById(`content-view-${index}`).style.display = 'none';
-    const ta = document.getElementById(`content-input-${index}`);
-    ta.style.display = 'block';
-    ta.style.height = 'auto';
-    ta.style.height = ta.scrollHeight + 'px';
-    ta.focus();
-}
-
-function saveContent(index) {
-    const newVal = document.getElementById(`content-input-${index}`).value.trim();
-    if (newVal) photoData[index].content = newVal;
-    document.getElementById(`content-input-${index}`).style.display = 'none';
-    const view = document.getElementById(`content-view-${index}`);
-    view.textContent = photoData[index].content;
-    view.style.display = 'block';
-}
+// 좋아요 / 댓글 - 로직은 나중에
+function onLikeClick(index) {}
+function onCommentClick(index) {}
 
 // =============================================
 // 이미지 수정
 // =============================================
-function triggerImgEdit(index) {
-    document.getElementById(`img-input-${index}`).click();
-}
 
 function applyImgEdit(index, event) {
     const file = event.target.files[0];
@@ -199,6 +160,31 @@ function applyImgEdit(index, event) {
 // =============================================
 // 삭제
 // =============================================
+async function deletePhoto(index) {
+    const imgName = photoData[index].imgName;
+    if (!confirm('이 게시글을 삭제할까요?')) return;
+    const del = await deleteSupabase(imgName);
+
+    try {
+        const response = await fetch(`/photo-data?imgName=${encodeURIComponent(imgName)}`, {
+            method: 'DELETE'
+        });
+        console.log(response.ok);
+        const text = await response.text();
+        const row = parseInt(text);
+        if (row > 0) {
+            closeAddModal();
+            alert('사진이 성공적으로 삭제되었습니다!');
+            loadPhoto();
+        } else {
+            alert('DB 삭제에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('서버 통신 중 오류가 발생했습니다.');
+    }
+}
+
 // =============================================
 // 추가 모달
 // =============================================
@@ -268,7 +254,6 @@ function closeAddModal() {
     document.getElementById('addModal').style.display = 'none';
     document.getElementById('addTitle').value = '';
     document.getElementById('addContent').value = '';
-
     document.getElementById('addImgFile').value = '';
     document.getElementById('addImgPreview').style.display = 'none';
 }
@@ -284,39 +269,31 @@ function previewAddImage(event) {
 async function addPhoto() {
     const title = document.getElementById('addTitle').value.trim();
     const content = document.getElementById('addContent').value.trim();
-    // 1. 값 검증 (파일은 Supabase로 가니까 여기서 제외)
     if (!title || !content) {
         alert('제목과 내용을 모두 입력해주세요!');
         return;
     }
     const data = await uploadSupabase();
-    if (!data || !data.url) return; // 업로드 실패 시 함수 종료
+    if (!data || !data.url) return;
 
-    // 파일이 빠졌으므로 FormData 대신 URLSearchParams를 쓰면 서블릿에서 받기 훨씬 깔끔
     const params = new URLSearchParams();
     params.append('title', title);
     params.append('content', content);
-    params.append('imgName', data.url); //
+    params.append('imgName', data.url);
 
     try {
-        // 4. 서블릿(photo-data)으로 POST 요청
         const response = await fetch('/photo-data', {
             method: 'POST',
-            body: params // application/x-www-form-urlencoded 형식으로 전송됨
+            body: params
         });
         console.log(response.ok);
-        // 5. 서블릿에서 응답한 최신 DB 데이터(JSON) 받기
         const text = await response.text();
         const row = parseInt(text);
 
         if (row > 0) {
-            // 6. 성공 처리 및 화면 갱신
             closeAddModal();
-
             alert('사진이 성공적으로 등록되었습니다!');
-            // 데이터를 받아와서 렌더링하는 함수 호출
-            // (renderFeedView가 전역 데이터를 쓰는지, 인자를 받는지에 따라 맞게 사용하세요)
-            loadPhoto()
+            loadPhoto();
         } else {
             alert('DB 저장에 실패했습니다.');
         }
@@ -326,36 +303,9 @@ async function addPhoto() {
     }
 }
 
-async function deletePhoto(index) {
-    const imgName = photoData[index].imgName;
-    if (!confirm('이 게시글을 삭제할까요?')) return;
-    const del = await deleteSupabase(imgName);
-
-    try {
-        const response = await fetch(`/photo-data?imgName=${encodeURIComponent(imgName)}`, {
-            method: 'DELETE'
-        });
-        console.log(response.ok);
-        // 5. 서블릿에서 응답한 최신 DB 데이터(JSON) 받기
-        const text = await response.text(); //response가 그냥 텍스트에요
-        const row = parseInt(text);
-        if (row > 0) {
-            // 6. 성공 처리 및 화면 갱신
-            closeAddModal();
-            alert('사진이 성공적으로 삭제되었습니다!');
-            // 데이터를 받아와서 렌더링하는 함수 호출
-            // (renderFeedView가 전역 데이터를 쓰는지, 인자를 받는지에 따라 맞게 사용하세요)
-            loadPhoto()
-        } else {
-            alert('DB 삭제에 실패했습니다.');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('서버 통신 중 오류가 발생했습니다.');
-    }
-
-}
-
+// =============================================
+// Supabase 업로드 / 삭제
+// =============================================
 async function uploadSupabase() {
     const fileInput = document.getElementById('addImgFile');
     const file = fileInput.files[0];
@@ -373,22 +323,17 @@ async function uploadSupabase() {
             return null;
         }
 
-        // 서버에서 {"url": "https://..."} 형식으로 반환한다고 가정
-        const text = await response.text();  // 서버에서 단순 문자열
+        const text = await response.text();
         const data = {url: text};
-
-        return data; // 이렇게 반환해야 addPhoto에서 imgUrl.url 사용 가능
+        return data;
     } catch (error) {
         console.error('Error:', error);
         alert('서버 통신 중 오류가 발생했습니다.');
         return null;
     }
-
-
 }
 
 async function deleteSupabase(imgName) {
-
     try {
         const response = await fetch(`/supabase?imgName=${encodeURIComponent(imgName)}`, {
             method: 'DELETE'
@@ -398,7 +343,6 @@ async function deleteSupabase(imgName) {
             alert('클라우드 삭제에 실패했습니다.');
             return null;
         }
-
     } catch (error) {
         console.error('Error:', error);
         alert('서버 통신 중 오류가 발생했습니다.');
