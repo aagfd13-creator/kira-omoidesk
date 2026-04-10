@@ -344,7 +344,6 @@ async function bgmConfirmAdd() {
 // ── 재생목록 리로드 부분 수정 (wasDefault 정의) ─────────────
 function reloadPlaylist(targetPk, options = {}) {
     const { keepPlaying = false, currentPlayingId = null } = options;
-
     const url = targetPk ? `/api/visitor/bgm?ownerPk=${targetPk}` : '/api/bgm';
 
     return fetch(url)
@@ -364,12 +363,15 @@ function reloadPlaylist(targetPk, options = {}) {
             // 2. 인덱스 보정 (여기가 중요)
             if (currentPlayingId) {
                 const newIndex = window.playlist.findIndex(t => t.youtubeId === currentPlayingId);
-                // 삭제되어 목록에 없거나 못 찾은 경우를 대비해 범위 제한
-                window.currentIndex = (newIndex >= 0) ? newIndex : Math.min(window.currentIndex, window.playlist.length - 1);
+                window.currentIndex = (newIndex >= 0) ? newIndex : 0;
             } else {
-                window.currentIndex = Math.min(window.currentIndex, window.playlist.length - 1);
+                // 저장된 마지막 인덱스를 가져와서 안전하게 적용
+                const savedIndex = parseInt(localStorage.getItem("bgmCurrentIndex") || "0", 10);
+                window.currentIndex = (savedIndex < window.playlist.length) ? savedIndex : 0;
             }
-            if (window.currentIndex < 0) window.currentIndex = 0;
+
+            // 확정된 인덱스를 다시 저장
+            localStorage.setItem("bgmCurrentIndex", window.currentIndex);
 
             window.fetchDone = true;
 
