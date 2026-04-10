@@ -1,56 +1,54 @@
 /**
- * [1] 다이어리 내용을 비동기로 불러와서 화면을 갈아끼우는 핵심 함수
+ * [1] 다이어리 내용을 비동기로 불러오는 핵심 함수
  */
 function loadDiary(url = "diary") {
-    // 1. URL에 ajax 파라미터가 없으면 붙여줌 (상태 유지용)
     if (!url.includes("ajax=true")) {
         url += (url.includes("?") ? "&" : "?") + "ajax=true";
     }
 
-    // 2. 주소창 앞에 슬래시(/)가 없어서 발생하는 404 방지 (상대경로 이슈 해결)
-    // 인텔리제이 context path가 '/'일 때 가장 안전한 방식입니다.
+    // 현재 페이지의 ownerId 유지 로직
+    const currentOwner = document.getElementById("currentDiaryOwner")?.value;
+    if (currentOwner && !url.includes("memberId=")) {
+        url += "&memberId=" + currentOwner;
+    }
+
     console.log("📬 요청 주소:", url);
 
     fetch(url)
         .then((response) => {
-            if (!response.ok) {
-                throw new Error(`서버 응답 에러 (상태코드: ${response.status})`);
-            }
-            // ★ 핵심: 반드시 .text()로 받아서 HTML로 처리
+            if (!response.ok) throw new Error(`서버 응답 에러 (상태코드: ${response.status})`);
             return response.text();
         })
         .then((html) => {
             const contentArea = document.getElementById("notebook-content");
             if (contentArea) {
-                // 기존 내용을 싹 비우고 새 HTML 주입
                 contentArea.innerHTML = html;
 
-                // 페이지 상단으로 스크롤 이동 (부드럽게)
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-
-            // 특정 날짜 목록인 경우 해당 위치로 스크롤 (성현님 기존 로직 유지)
-            if (url.includes("d=")) {
-                const board = document.querySelector(".diary-board");
-                if (board) {
-                    board.scrollIntoView({ behavior: "smooth", block: "start" });
+                // ★ [성현님 요청 기능] 날짜 클릭 시 목록으로 부드럽게 스크롤
+                // URL에 'd='이 있으면 날짜를 선택했다는 뜻이므로 목록 위치로 이동합니다.
+                if (url.includes("d=")) {
+                    // diary-board 클래스를 가진 요소(목록창)를 찾아서 그 위치로 이동
+                    setTimeout(() => {
+                        const board = document.querySelector(".diary-board");
+                        if (board) {
+                            board.scrollIntoView({ behavior: "smooth", block: "start" });
+                        }
+                    }, 50); // HTML이 완전히 렌더링될 시간을 아주 잠깐 줌
+                } else {
+                    // 그 외 일반 이동은 상단으로 스크롤
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 }
             }
         })
-        .catch((error) => {
-            console.error("❌ 다이어리 로드 실패:", error);
-            // 에러 시 사용자에게 알림 (선택 사항)
-            // alert("화면을 불러오는 중 오류가 발생했습니다.");
-        });
+        .catch((error) => console.error("❌ 다이어리 로드 실패:", error));
 }
 
 /**
- * [2] 일기 작성 (Create)
+ * [2] 일기 작성
  */
 function submitDiaryForm() {
     const form = document.getElementById('diaryWriteForm');
     if (!form) return;
-
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
 
@@ -61,22 +59,17 @@ function submitDiaryForm() {
     })
         .then(response => response.text())
         .then(() => {
-            // 등록 후 해당 날짜 목록으로 이동
-            const y = formData.get('d_year');
-            const m = formData.get('d_month');
-            const d = formData.get('d_date');
-            loadDiary(`diary?y=${y}&m=${m}&d=${d}`);
+            loadDiary(`diary?y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}`);
         })
         .catch(error => console.error("일기 등록 실패:", error));
 }
 
 /**
- * [3] 일기 수정 (Update)
+ * [3] 일기 수정
  */
 function updateDiaryForm() {
     const form = document.getElementById('diaryUpdateForm');
     if (!form) return;
-
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
 
@@ -87,12 +80,7 @@ function updateDiaryForm() {
     })
         .then(response => response.text())
         .then(() => {
-            const no = formData.get('no');
-            const y = formData.get('d_year');
-            const m = formData.get('d_month');
-            const d = formData.get('d_date');
-            // 수정 완료 후 상세 페이지 재로드
-            loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
+            loadDiary(`diary-detail?no=${formData.get('no')}&y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}`);
         })
         .catch(error => console.error("일기 수정 실패:", error));
 }
@@ -102,15 +90,8 @@ function updateDiaryForm() {
  */
 function submitReply(no, y, m, d) {
     const form = document.getElementById('replyWriteForm');
-    if (!form) return;
-
     const input = form.querySelector('input[name="r_txt"]');
-    if (!input.value.trim()) {
-        alert("댓글 내용을 입력해주세요! 😊");
-        input.focus();
-        return;
-    }
-
+    if (!input.value.trim()) { alert("댓글 내용을 입력해주세요! 😊"); input.focus(); return; }
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
 
@@ -121,9 +102,7 @@ function submitReply(no, y, m, d) {
     })
         .then(response => response.text())
         .then(() => {
-            // 댓글 창 비우기
             input.value = "";
-            // 상세 페이지 새로고침
             loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
         })
         .catch(error => console.error("댓글 등록 실패:", error));
@@ -134,12 +113,33 @@ function submitReply(no, y, m, d) {
  */
 function deleteReply(r_no, d_no, y, m, d) {
     if (!confirm("이 댓글을 정말 삭제할까요? 🗑️")) return;
-
     fetch(`diary-reply-delete?r_no=${r_no}`)
-        .then(response => response.text())
-        .then(() => {
-            // 삭제 후 상세 페이지 새로고침
-            loadDiary(`diary-detail?no=${d_no}&y=${y}&m=${m}&d=${d}`);
-        })
+        .then(() => loadDiary(`diary-detail?no=${d_no}&y=${y}&m=${m}&d=${d}`))
         .catch(error => console.error("댓글 삭제 실패:", error));
 }
+
+// [보조 캘린더 로직]
+let currentPickerYear = new Date().getFullYear();
+function openQuickPicker(e) {
+    e.stopPropagation();
+    const picker = document.getElementById('quickDatePicker');
+    if (picker) {
+        picker.style.display = 'block';
+        currentPickerYear = document.getElementById('quickYearSelect').value;
+    }
+}
+function updateQuickYear(val) { currentPickerYear = val; }
+function confirmQuickDate(month) {
+    loadDiary(`diary?y=${currentPickerYear}&m=${month}`);
+    const picker = document.getElementById('quickDatePicker');
+    if (picker) picker.style.display = 'none';
+}
+window.addEventListener('click', function(e) {
+    const picker = document.getElementById('quickDatePicker');
+    const title = document.querySelector('.cal-title-click');
+    if (picker && picker.style.display === 'block') {
+        if (!picker.contains(e.target) && e.target !== title) {
+            picker.style.display = 'none';
+        }
+    }
+});

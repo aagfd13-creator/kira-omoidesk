@@ -27,6 +27,16 @@ public class DiaryDAO {
         String d = req.getParameter("d");
         String mode = req.getParameter("mode");
 
+        // [추가] 일촌 다이어리 연동을 위한 ID 파라미터 받기
+        String memberId = req.getParameter("memberId");
+        HttpSession session = req.getSession();
+        String myId = (String) session.getAttribute("loginUserId");
+        String myPk = (String) session.getAttribute("loginUserPk");
+
+        // ★ 핵심: 파라미터로 받은 memberId가 있으면 그 사람 꺼, 없으면 내 꺼 조회
+        String targetId = (memberId == null || memberId.isEmpty()) ? myId : memberId;
+        req.setAttribute("ownerId", targetId);
+
         int year = (y == null || y.equals("")) ? cal.get(Calendar.YEAR) : Integer.parseInt(y);
         int month = (m == null || m.equals("")) ? cal.get(Calendar.MONTH) : Integer.parseInt(m) - 1;
 
@@ -36,7 +46,6 @@ public class DiaryDAO {
         int startDay = cal.get(Calendar.DAY_OF_WEEK);
         int lastDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
-        // [중요] 달력 기본 데이터 세팅 (에러 나기 전에 미리 세팅!)
         req.setAttribute("startDay", startDay);
         req.setAttribute("lastDay", lastDay);
         req.setAttribute("curYear", curYear);
@@ -59,19 +68,13 @@ public class DiaryDAO {
 
             try {
                 con = DBManager.connect();
-                HttpSession session = req.getSession();
 
-                // 세션에서 내 정보 가져오기
-                String myId = (String) session.getAttribute("loginUserId");
-                String myPk = (String) session.getAttribute("loginUserPk");
-
-                // 미니홈피 주인 정보 (없으면 나로 간주)
-                String ownerId = (String) session.getAttribute("ownerUserId");
+                // [수정] 미니홈피 주인 PK 정보 가져오기 (관계 파악용)
+                // 이 부분은 성현님 프로젝트의 세션 설계에 따라 ownerUserPk가 세션에 미리 담겨있어야 합니다.
+                String ownerId = targetId;
                 String ownerPk = (String) session.getAttribute("ownerUserPk");
-                if (ownerId == null) ownerId = (myId != null) ? myId : "";
-                if (ownerPk == null) ownerPk = (myPk != null) ? myPk : "";
+                // (만약 ownerPk가 세션에 없다면 DAO에서 ID로 PK를 조회하는 로직이 추가로 필요할 수 있습니다.)
 
-                // 관계 파악 (0:남남, 1:일촌, 2:본인)
                 int relation = 0;
                 if (myId != null && !myId.isEmpty() && ownerId != null && !ownerId.isEmpty()) {
                     if (myId.equals(ownerId)) { relation = 2; }
@@ -86,7 +89,7 @@ public class DiaryDAO {
                 String formattedDay = String.format("%02d", Integer.parseInt(d));
                 String fullDate = curYear + "-" + formattedMonth + "-" + formattedDay;
 
-                // SQL 쿼리 (공개범위 필터링)
+                // [중요] targetId(일촌 혹은 본인)의 글을 조회하도록 쿼리 실행
                 String sql = "SELECT * FROM diary_test WHERE TO_CHAR(d_date, 'YYYY-MM-DD') = ? AND d_id = ? ";
                 if (relation == 2) sql += "AND d_visibility IN (0, 1, 2) ";
                 else if (relation == 1) sql += "AND d_visibility IN (1, 2) ";
@@ -95,7 +98,7 @@ public class DiaryDAO {
 
                 pstmt = con.prepareStatement(sql);
                 pstmt.setString(1, fullDate);
-                pstmt.setString(2, ownerId);
+                pstmt.setString(2, targetId);
                 rs = pstmt.executeQuery();
 
                 while (rs.next()) {
@@ -105,59 +108,12 @@ public class DiaryDAO {
                     dto.setTitle(rs.getString("d_title"));
                     dto.setTxt(rs.getString("d_txt"));
                     dto.setVisibility(rs.getInt("d_visibility"));
-
-//                    System.out.println("여기 비저빌리티 있어요~!~!"+rs.getInt("d_visibility"));
                     posts.add(dto);
                 }
             } catch (Exception e) { e.printStackTrace(); }
             finally { DBManager.close(con, pstmt, rs); }
 
-
-
             req.setAttribute("posts", posts);
-        }
-    }
-
-    // 전체조회
-    public void selectAllDiary(HttpServletRequest req) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-
-        try {
-            con = DBManager.connect();
-
-            // ★ 전체 조회에서도 내 글만 보이게 쿼리 수정!
-            HttpSession session = req.getSession();
-            String loginId = (String) session.getAttribute("loginUserId");
-
-            // ★ 공개 설정이 2(전체 공개)이거나, 내가 쓴 글인 것 가져오기!
-            String sql = "SELECT * FROM diary_test WHERE (d_visibility = 2 OR d_id = ?) ORDER BY d_date DESC";
-            pstmt = con.prepareStatement(sql);
-
-            if(loginId == null) loginId = "";
-            pstmt.setString(1, loginId);
-
-            rs = pstmt.executeQuery();
-            ArrayList<DiaryDTO> diaries = new ArrayList<>();
-
-            while (rs.next()) {
-                DiaryDTO dto = new DiaryDTO();
-                dto.setNo(rs.getInt("d_no"));
-                dto.setId(rs.getString("d_id"));
-                dto.setDate(rs.getDate("d_date"));
-                dto.setTitle(rs.getString("d_title"));
-                dto.setTxt(rs.getString("d_txt"));
-                dto.setVisibility(rs.getInt("d_visibility"));
-
-                diaries.add(dto);
-            }
-            req.setAttribute("diaries", diaries);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, rs);
         }
     }
 
@@ -212,7 +168,7 @@ public class DiaryDAO {
         }
     }
 
-    // 상세보기 기능
+    // 상세보기 기능 (ID 연동 추가)
     public void getDiaryDetail(HttpServletRequest req) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -220,11 +176,11 @@ public class DiaryDAO {
 
         try {
             con = DBManager.connect();
-
             String no = req.getParameter("no");
             String y = req.getParameter("y");
             String m = req.getParameter("m");
             String d = req.getParameter("d");
+            String memberId = req.getParameter("memberId"); // 일촌 ID 유지용
 
             String sql = "SELECT * FROM diary_test WHERE d_no = ?";
             pstmt = con.prepareStatement(sql);
@@ -239,19 +195,16 @@ public class DiaryDAO {
                 dto.setTxt(rs.getString("d_txt"));
                 dto.setDate(rs.getDate("d_date"));
                 dto.setVisibility(rs.getInt("d_visibility"));
-
                 req.setAttribute("diary", dto);
             }
 
             req.setAttribute("curYear", y);
             req.setAttribute("curMonth", m);
             req.setAttribute("selectedDay", d);
+            req.setAttribute("ownerId", (memberId == null || memberId.isEmpty()) ? "" : memberId);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, rs);
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, rs); }
     }
 
     // 삭제 기능
