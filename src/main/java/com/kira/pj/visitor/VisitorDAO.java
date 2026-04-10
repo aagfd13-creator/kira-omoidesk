@@ -103,7 +103,7 @@ public class VisitorDAO {
                 "SELECT * FROM (" +
                         "  SELECT v.v_id, v.v_writer_pk, u.u_nickname AS v_writer_nickname, v.v_emoji, TO_CHAR(v.v_date, 'MM.DD') as v_date_fmt " +
                         "  FROM visitor_log v " +
-                        "  JOIN userReg u ON v.v_writer_pk = u.u_pk " +
+                        "  JOIN userReg u ON v.v_writer_pk = u.u_id " +
                         "  WHERE v.v_owner_pk = ? ORDER BY v.v_date DESC" +
                         ") WHERE rownum <= 5";
         try {
@@ -164,7 +164,7 @@ public class VisitorDAO {
                         "  SELECT rownum as rn, t.* FROM (" +
                         "    SELECT v.v_id, v.v_writer_pk, u.u_nickname AS v_writer_nickname, v.v_emoji, TO_CHAR(v.v_date, 'MM.DD AM HH12:MI') as v_date_fmt " +
                         "    FROM visitor_log v " +
-                        "    JOIN userReg u ON v.v_writer_pk = u.u_pk " +
+                        "    JOIN userReg u ON v.v_writer_pk = u.u_id " +
                         "    WHERE v.v_owner_pk = ? ORDER BY v.v_date DESC" +
                         "  ) t" +
                         ") WHERE rn BETWEEN ? AND ?";
