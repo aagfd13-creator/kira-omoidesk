@@ -19,9 +19,9 @@ public class DiaryDAO {
     private DiaryDAO() {
     }
 
-    // [보조 메서드] ID를 가지고 해당 유저의 PK를 찾아오는 로직 (관계 확인용)
-    // 비동기 환경에서 세션의 ownerUserPk가 갱신되지 않는 문제를 해결합니다.
-    private String getUserPkById(String userId) {
+    // [보조 메서드] ID를 가지고 해당 유저의 PK를 찾아오는 로직
+    // ★ private → public 으로 변경 (DiaryDetailC에서도 사용)
+    public String getUserPkById(String userId) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -32,8 +32,11 @@ public class DiaryDAO {
             pstmt.setString(1, userId.trim());
             rs = pstmt.executeQuery();
             if (rs.next()) return rs.getString("u_pk");
-        } catch (Exception e) { e.printStackTrace();
-        } finally { DBManager.close(con, pstmt, rs); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, rs);
+        }
         return null;
     }
 
@@ -44,15 +47,21 @@ public class DiaryDAO {
         String d = req.getParameter("d");
         String mode = req.getParameter("mode");
 
-        // ★ [핵심] JS(loadDiary)가 보낸 memberId(방문 중인 주인 ID)를 받습니다.
-        String memberId = req.getParameter("memberId");
-
         HttpSession session = req.getSession();
-        String myId = (String) session.getAttribute("loginUserId"); // 나 (sam2678)
+        String myId = (String) session.getAttribute("loginUserId");
         String myPk = (String) session.getAttribute("loginUserPk");
 
-        // ★ 조회 대상 결정: 파라미터가 있으면 타인(백엔드), 없으면 나(서녕)
-        String targetId = (memberId == null || memberId.isEmpty()) ? myId : memberId;
+        // ★ [핵심 수정] 서블릿(DiaryC)이 미리 세팅한 ownerId attribute를 최우선으로 사용
+        // 없으면 파라미터에서 읽고, 그것도 없으면 내 ID 사용
+        String targetId = (String) req.getAttribute("ownerId");
+        if (targetId == null || targetId.isEmpty()) {
+            String memberId = req.getParameter("memberId");
+            if (memberId == null || memberId.isEmpty()) {
+                memberId = req.getParameter("host_id");
+            }
+            targetId = (memberId == null || memberId.isEmpty()) ? myId : memberId;
+        }
+
         req.setAttribute("ownerId", targetId);
 
         int year = (y == null || y.equals("")) ? cal.get(Calendar.YEAR) : Integer.parseInt(y);
@@ -74,8 +83,13 @@ public class DiaryDAO {
         req.setAttribute("nextMonth", (curMonth == 11) ? 1 : curMonth + 2);
 
         String showMode = "calendar";
-        if ("write".equals(mode)) { showMode = "write"; req.setAttribute("selectedDay", d); }
-        else if (d != null && !d.equals("")) { showMode = "list"; req.setAttribute("selectedDay", d); }
+        if ("write".equals(mode)) {
+            showMode = "write";
+            req.setAttribute("selectedDay", d);
+        } else if (d != null && !d.equals("")) {
+            showMode = "list";
+            req.setAttribute("selectedDay", d);
+        }
         req.setAttribute("showMode", showMode);
 
         if ("list".equals(showMode)) {
@@ -110,8 +124,8 @@ public class DiaryDAO {
                 // ★ [중요] 쿼리문: targetId의 글을 조회하고 관계별 필터링 적용
                 String sql = "SELECT * FROM diary_test WHERE TO_CHAR(d_date, 'YYYY-MM-DD') = ? AND d_id = ? ";
                 if (relation == 2) sql += "AND d_visibility IN (0, 1, 2) ";
-                else if (relation == 1) sql += "AND d_visibility IN (1, 2) "; // 일촌글 + 전체글
-                else sql += "AND d_visibility = 2 "; // 전체글만
+                else if (relation == 1) sql += "AND d_visibility IN (1, 2) ";
+                else sql += "AND d_visibility = 2 ";
                 sql += "ORDER BY d_no DESC";
 
                 pstmt = con.prepareStatement(sql);
@@ -128,8 +142,11 @@ public class DiaryDAO {
                     dto.setVisibility(rs.getInt("d_visibility"));
                     posts.add(dto);
                 }
-            } catch (Exception e) { e.printStackTrace(); }
-            finally { DBManager.close(con, pstmt, rs); }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                DBManager.close(con, pstmt, rs);
+            }
             req.setAttribute("posts", posts);
         }
     }
@@ -159,8 +176,11 @@ public class DiaryDAO {
             pstmt.setString(4, txt);
             pstmt.setInt(5, Integer.parseInt(visibility));
             pstmt.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, null); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
     }
 
     public void getDiaryDetail(HttpServletRequest req) {
@@ -192,8 +212,11 @@ public class DiaryDAO {
             req.setAttribute("curMonth", m);
             req.setAttribute("selectedDay", d);
             req.setAttribute("ownerId", (memberId == null) ? "" : memberId);
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, rs); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, rs);
+        }
     }
 
     public void updateDiary(HttpServletRequest request) {
@@ -212,8 +235,11 @@ public class DiaryDAO {
             pstmt.setInt(3, Integer.parseInt(visibility));
             pstmt.setInt(4, Integer.parseInt(no));
             pstmt.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, null); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
     }
 
     public void deleteDiary(HttpServletRequest request) {
@@ -226,8 +252,11 @@ public class DiaryDAO {
             pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, Integer.parseInt(no));
             pstmt.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, null); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
     }
 
     public void insertReply(HttpServletRequest req) {
@@ -241,8 +270,11 @@ public class DiaryDAO {
             pstmt.setString(2, (String) req.getSession().getAttribute("loginUserId"));
             pstmt.setString(3, req.getParameter("r_txt"));
             pstmt.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, null); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
     }
 
     public void getReplies(HttpServletRequest req) {
@@ -260,8 +292,11 @@ public class DiaryDAO {
                 replies.add(new ReplyDTO(rs.getInt("r_no"), rs.getInt("d_no"), rs.getString("r_id"), rs.getString("r_txt"), rs.getDate("r_date")));
             }
             req.setAttribute("replies", replies);
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, rs); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, rs);
+        }
     }
 
     public void deleteReply(HttpServletRequest req) {
@@ -272,7 +307,10 @@ public class DiaryDAO {
             pstmt = con.prepareStatement("DELETE FROM diary_reply WHERE r_no = ?");
             pstmt.setInt(1, Integer.parseInt(req.getParameter("r_no")));
             pstmt.executeUpdate();
-        } catch (Exception e) { e.printStackTrace(); }
-        finally { DBManager.close(con, pstmt, null); }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, null);
+        }
     }
 }

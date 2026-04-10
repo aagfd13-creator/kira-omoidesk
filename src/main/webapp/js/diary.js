@@ -10,11 +10,10 @@ function loadDiary(url = "diary") {
     queryParams.set("ajax", "true");
 
     // ★ [핵심] 팀원분 index.js가 저장한 '방문 중인 홈피 주인 ID'를 가져옵니다.
-    // 백엔드님 홈피에 있을 때는 이 값이 백엔드님의 ID일 겁니다.
     const currentHostId = sessionStorage.getItem("currentHostId");
 
     if (currentHostId) {
-        // 주소창 파라미터가 내 아이디로 되어있어도, 방문 중인 주인 ID로 강제 교체!
+        // 방문 중인 주인 ID로 강제 교체
         queryParams.set("memberId", currentHostId);
     }
 
@@ -28,7 +27,7 @@ function loadDiary(url = "diary") {
             if (contentArea) {
                 contentArea.innerHTML = html;
 
-                // [성현님 요청] 날짜 클릭 시 목록으로 스크롤
+                // 날짜 클릭 시 목록으로 스크롤
                 if (queryParams.has("d")) {
                     setTimeout(() => {
                         const board = document.querySelector(".diary-board");
@@ -42,7 +41,6 @@ function loadDiary(url = "diary") {
         .catch((error) => console.error("❌ 다이어리 로드 실패:", error));
 }
 
-// --- 나머지 함수들은 성현님 원본 유지 (내부에서 loadDiary를 호출하므로 자동 적용됨) ---
 function submitDiaryForm() {
     const form = document.getElementById('diaryWriteForm');
     if (!form) return;
@@ -53,7 +51,8 @@ function submitDiaryForm() {
         headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
         body: params
     })
-        .then(() => loadDiary(`diary?y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}`));
+        // ★ [수정] memberId를 함께 전달해야 남의 홈피에서 글 쓴 후 올바른 목록으로 돌아옴
+        .then(() => loadDiary(`diary?y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}&memberId=${formData.get('memberId')}`));
 }
 
 function updateDiaryForm() {
@@ -66,7 +65,8 @@ function updateDiaryForm() {
         headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
         body: params
     })
-        .then(() => loadDiary(`diary-detail?no=${formData.get('no')}&y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}`));
+        // ★ [수정] memberId를 함께 전달해야 수정 후 올바른 상세보기로 돌아옴
+        .then(() => loadDiary(`diary-detail?no=${formData.get('no')}&y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}&memberId=${formData.get('memberId')}`));
 }
 
 function submitReply(no, y, m, d) {

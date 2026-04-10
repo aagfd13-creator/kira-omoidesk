@@ -17,7 +17,7 @@ public class DiaryC extends HttpServlet {
         HttpSession session = request.getSession();
         String loginUserId = (String) session.getAttribute("loginUserId");
 
-        // ★ 팀원분 index.js 규칙(host_id)과 성현님 규칙(memberId) 둘 다 체크
+        // ★ memberId, host_id 둘 다 체크
         String memberId = request.getParameter("memberId");
         String hostId = request.getParameter("host_id");
 
@@ -32,7 +32,7 @@ public class DiaryC extends HttpServlet {
             targetId = loginUserId;
         }
 
-        // JSP로 넘겨줄 때는 'ownerId'로 통일
+        // ★ [핵심] ownerId를 attribute로 미리 세팅해서 DAO가 파라미터 대신 이 값을 우선 사용하도록 함
         request.setAttribute("ownerId", targetId);
 
         DiaryDAO.DDAO.getCalendar(request);
