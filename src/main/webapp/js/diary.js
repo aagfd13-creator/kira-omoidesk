@@ -114,3 +114,36 @@ window.addEventListener('click', function (e) {
     const picker = document.getElementById('quickDatePicker');
     if (picker && !picker.contains(e.target)) picker.style.display = 'none';
 });
+
+// =====================================
+// [최종] 다이어리 전용 좋아요 토글 기능 (이름 충돌 방지)
+// =====================================
+function toggleDiaryLike(dNo) {
+    const params = new URLSearchParams();
+    params.append('d_no', dNo);
+
+    fetch('diary-like', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        body: params
+    })
+        .then(response => {
+            if (!response.ok) {
+                alert("로그인이 필요한 기능입니다!");
+                throw new Error("로그인 필요");
+            }
+            return response.json();
+        })
+        .then(data => {
+            const heartIcon = document.getElementById(`heart-icon-${dNo}`);
+            const likeCountSpan = document.getElementById(`like-count-${dNo}`);
+
+            if (heartIcon && likeCountSpan) {
+                // HTML 엔티티를 사용하여 하트 상태 업데이트
+                heartIcon.innerHTML = data.isLiked === 1 ? '&#10084;&#65039;' : '&#129293;';
+                // 총 좋아요 개수 업데이트
+                likeCountSpan.innerText = data.likeCount;
+            }
+        })
+        .catch(error => console.error("좋아요 처리 실패:", error));
+}
