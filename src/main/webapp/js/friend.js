@@ -216,7 +216,7 @@ function loadFriendList() {
                 const html = `
                     <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:15px; border-radius:10px; border:1px solid #f2c0bd; margin-bottom:10px;">
                         <div>
-                            <span style="font-size:18px; cursor:pointer;" onclick="goSearchMain('${f.friend_pk}', '${f.u_nickname}')">
+                            <span style="font-size:18px; cursor:pointer;" onclick="goSearchMain('${f.u_id}', '${f.u_nickname}')">
                                 🌱 <b>${f.u_nickname}</b>
                             </span>
                             <div style="font-size:11px; color:#c0b0a0;">일촌 맺은 날: ${f.f_date}</div>

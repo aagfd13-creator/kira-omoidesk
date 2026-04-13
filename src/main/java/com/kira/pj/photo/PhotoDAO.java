@@ -19,10 +19,10 @@ public class PhotoDAO {
         ResultSet rs = null;
         String sql = "select * from photo where user_id = ? order by reg_date desc ";
         String hostId = request.getParameter("host_id");
-        if (hostId == null || hostId.isEmpty()) {
-            HttpSession session = request.getSession();
-            hostId = session.getAttribute("loginUserId").toString();
-        }
+//        if (hostId == null || hostId.isEmpty()) {
+//            HttpSession session = request.getSession();
+//            hostId = session.getAttribute("loginUserId").toString();
+//        }
 
         try {
             conn = DBManager.connect();
@@ -40,7 +40,7 @@ public class PhotoDAO {
                 photos.add(photo.toJSON());
 
             }
-            System.out.println(photos);
+//            System.out.println(photos);
             System.out.println(hostId);
             return photos;
         } catch (Exception e) {
