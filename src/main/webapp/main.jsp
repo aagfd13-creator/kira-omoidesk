@@ -9,7 +9,7 @@
 </head>
 <body>
 <div class="nb-body home-wrapper">
-
+    
     <div class="home-status-board">
         <div class="status-left">
             <div class="home-status-msg">
@@ -40,10 +40,6 @@
 <div class="home-visual">
     <span class="visual-placeholder">${searchMain.main_img}</span>
 
-    <div onclick="toggleLike()" class="like-btn">
-        <span id="like-icon">🤍</span>
-        <span id="like-count">12</span>
-    </div>
 </div>
 
 <div class="home-bottom-row">
