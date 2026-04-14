@@ -139,8 +139,14 @@ const pageRoutes = {
     // 🚨 [여기에 핵심 추가] 쪽지함 메뉴를 클릭했을 때 initMessage()를 실행하도록 라우터에 등록한다.
     "message.jsp": {
         initFunc: () => typeof initMessage === "function" && initMessage(),
+        cssClass: "",
+    },
+    "home": {
+        initFunc: () => typeof loadDaemoon === "function" && loadDaemoon(),
         cssClass: ""
     }
+
+
 };
 
 function loadPage(url) {
@@ -318,4 +324,43 @@ function saveQnA(mode) {
 // 다이어리에 추가 버튼 (기능 추가 시 구현)
 function addQnAToDiary() {
     alert("다이어리 연동 기능은 준비 중입니다! 🛠️");
+}
+
+// 대문사진 tk 수정
+async function loadDaemoon() {
+    const savedOwnerId = sessionStorage.getItem("currentHostId");
+    const targetOwnerId = savedOwnerId ? savedOwnerId : loginUserId;
+
+
+    const daemoonContainer = document.getElementById("home-daemoon");
+    // 변수명 통일
+    if (!daemoonContainer) return;
+
+    // 로딩 상태 표시
+    daemoonContainer.innerHTML = `<span style="color:#999;">사진을 불러오는 중...</span>`;
+
+    try {
+        const response = await fetch(`/photo-data?host_id=${targetOwnerId}`);
+
+        if (!response.ok) {
+            throw new Error(`서버 응답 오류: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // 🚨 핵심 로직 수정:
+        // DAO에서 배열(List)로 주고 있으므로 데이터가 있는지(길이>0) 확인하고,
+        // DTO 프로퍼티명인 imgName을 꺼내야 합니다. 배열의 첫번째[0]가 최신 사진.
+        if (data && data.length > 0 && data[0].imgName) {
+            daemoonContainer.innerHTML = `
+                <img src="${data[0].imgName}" alt="대문 사진" style="width: 100%; height: 100%; object-fit: contain; border-radius: 30px;">
+            `;
+        } else {
+            daemoonContainer.innerHTML = `<span style="color:#bbb;">등록된 대문사진이 없습니다. 📷</span>`;
+        }
+
+    } catch (err) {
+        console.error("대문사진 로드 에러:", err);
+        daemoonContainer.innerHTML = `<span style="color:red;">이미지 로딩 실패</span>`;
+    }
 }

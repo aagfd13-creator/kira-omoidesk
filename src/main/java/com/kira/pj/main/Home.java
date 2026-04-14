@@ -1,6 +1,8 @@
 package com.kira.pj.main;
 
 import com.google.gson.Gson;
+import com.kira.pj.photo.PhotoDAO;
+import com.kira.pj.photo.PhotoDTO;
 import com.kira.pj.search.SearchDAO;
 
 import javax.servlet.ServletException;
@@ -9,6 +11,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.List;
 
 @WebServlet(name = "Home", value = "/home")
 public class Home extends HttpServlet {
@@ -24,6 +27,8 @@ public class Home extends HttpServlet {
 
         // 여기서 "dailyQna" 라는 이름으로 담아줘야 JSP에서 ${dailyQna.question} 으로 꺼내 쓸 수 있습니다.
         request.setAttribute("dailyQna", HomeDAO.getDailyQnA(request));
+        List<PhotoDTO> photoList = PhotoDAO.PDAO.getPhotoList(request);
+        request.setAttribute("photoList", photoList);
 
         request.setAttribute("searchMain", SearchDAO.searchMain(request));
 

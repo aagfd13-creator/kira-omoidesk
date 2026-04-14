@@ -23,7 +23,20 @@
     </div>
     <span class="status-since">${searchMain.st_date}</span>
 </div>
-
+<div class="home-daemoon-wrapper">
+    <div class="home-daemoon" id="home-daemoon">
+        <c:choose>
+            <%-- 리스트가 비어있지 않고, 0번 인덱스에 사진 이름이 있을 때 --%>
+            <c:when test="${not empty photoList and not empty photoList[0].imgName}">
+                <%-- 회원님 계획대로 깔끔하게 [0]번 인덱스 가져오기! --%>
+                <img src="${photoList[0].imgName}" alt="대문 사진" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
+            </c:when>
+            <c:otherwise>
+                <span style="color:#bbb;">등록된 대문사진이 없습니다. 📷</span>
+            </c:otherwise>
+        </c:choose>
+    </div>
+</div>
 <div class="home-visual">
     <span class="visual-placeholder">${searchMain.main_img}</span>
 
