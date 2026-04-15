@@ -166,41 +166,114 @@ function buildFeedCard(item, index, isOwner, loginId) {
         <div id="comment-section-${pid}" style="
             max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out;
             background: #fdfcf8; border-top: 1px solid #eee;">
-            <div style="padding: 20px;">
-                <div style="font-size:14px; color:#777; margin-bottom:10px;">댓글을 남겨보세요 💬</div>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="comment-input-${pid}" placeholder="내용을 입력하세요..." style="
-                        flex:1; padding:8px 12px; border:1px solid #ddd; border-radius:20px;
-                        font-family:'Gaegu', cursive; font-size:14px; outline:none;"
-                        onkeypress="if(event.key==='Enter') addComment(${pid})">
-                    <button onclick="addComment(${pid})" style="
-                        padding:6px 16px; background:#ffb3ba; color:#fff; border:none;
-                        border-radius:20px; font-family:'Gaegu', cursive; cursor:pointer;">등록</button>
-                </div>
-                
-                <div style="margin-top:15px; font-size:13px; color:#888;">
-                    ${item.comments && item.comments.length > 0 ? item.comments.map(c =>
-        `<div style="padding:10px 0; border-bottom:1px dashed #eee; display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <span style="color:#444; font-weight:bold;">${c.userName}</span>
-                            <span style="color:#555; margin-left:5px;">${c.content}</span>
-                            <span style="color:#999; font-size:11px; margin-left:10px;">${c.regDate}</span>
-                        </div>
-                        ${c.userId === loginId ? `
-                            <button onclick="deleteComment(${c.commentId})" style="
-                                background:none; border:none; cursor:pointer; font-size:14px; opacity:0.6;"
-                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'" title="삭제">🗑️</button>
-                        ` : ''}
-                    </div>`).join('') : `<div style="padding:8px 0;">아직 작성된 댓글이 없습니다.</div>`}
-                </div>          
+
+            <!-- 댓글 헤더 -->
+            <div style="
+                padding: 14px 18px 10px;
+                border-bottom: 0.5px dashed #f0e6e8;
+                display: flex; align-items: center; gap: 6px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#bbb" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span style="font-size:13px; color:#bbb; font-family:'Gaegu', cursive;">댓글</span>
+                <span style="
+                    background:#ffb3ba22; color:#d4537e;
+                    font-size:12px; font-weight:700;
+                    padding:2px 8px; border-radius:20px;
+                    border:1px solid #f4c0d133;
+                    font-family:'Gaegu', cursive;">
+                    ${item.comments ? item.comments.length : 0}
+                </span>
+            </div>
+
+            <!-- 댓글 목록 -->
+            <div style="padding: 6px 18px 0; display:flex; flex-direction:column;">
+                ${item.comments && item.comments.length > 0
+        ? item.comments.map(c => {
+            const initial = c.userName ? c.userName.charAt(0) : '?';
+            return `
+                        <div style="
+                            display:flex; align-items:flex-start; gap:10px;
+                            padding:10px 0;
+                            border-bottom:0.5px dashed #f0eae8;">
+
+                            <!-- 아바타 -->
+                            <div style="
+                                width:30px; height:30px; min-width:30px;
+                                border-radius:50%;
+                                background:#fbeaf0;
+                                display:flex; align-items:center; justify-content:center;
+                                font-size:13px; font-weight:700; color:#d4537e;
+                                border:1px solid #f4c0d155;
+                                font-family:'Gaegu', cursive;">
+                                ${initial}
+                            </div>
+
+                            <!-- 본문 -->
+                            <div style="flex:1;">
+                                <div style="display:flex; align-items:baseline; gap:6px; margin-bottom:3px;">
+                                    <span style="font-size:14px; font-weight:700; color:#444; font-family:'Gaegu', cursive;">
+                                        ${c.userName}
+                                    </span>
+                                    <span style="font-size:11px; color:#bbb; font-family:'Gaegu', cursive;">
+                                        ${c.regDate}
+                                    </span>
+                                </div>
+                                <div style="font-size:14px; color:#666; line-height:1.5; font-family:'Gaegu', cursive;">
+                                    ${c.content}
+                                </div>
+                            </div>
+
+                            <!-- 삭제 버튼 -->
+                            ${c.userId === loginId ? `
+                                <button onclick="deleteComment(${c.commentId})" style="
+                                    background:none; border:none; cursor:pointer;
+                                    font-size:13px; opacity:0.35; padding:2px 4px;
+                                    border-radius:4px;"
+                                    onmouseover="this.style.opacity='1'"
+                                    onmouseout="this.style.opacity='0.35'"
+                                    title="삭제">🗑️</button>
+                            ` : ''}
+                        </div>`;
+        }).join('')
+        : `<div style="
+                        padding:18px 0; text-align:center;
+                        font-size:13px; color:#ccc; font-family:'Gaegu', cursive;">
+                        아직 댓글이 없어요. 첫 댓글을 남겨보세요!
+                    </div>`
+    }
+            </div>
+
+            <!-- 입력창 -->
+            <div style="
+                padding:12px 18px 14px;
+                border-top:0.5px dashed #f0e6e8;
+                display:flex; gap:8px; align-items:center;
+                margin-top:4px;">
+                <input type="text"
+                    id="comment-input-${pid}"
+                    placeholder="댓글을 남겨보세요 💬"
+                    style="
+                        flex:1; padding:9px 14px;
+                        border:1px solid #e8dde0;
+                        border-radius:24px;
+                        font-family:'Gaegu', cursive; font-size:14px; outline:none;
+                        background:#fdfcfa; color:#555;"
+                    onkeypress="if(event.key==='Enter') addComment(${pid})">
+                <button onclick="addComment(${pid})" style="
+                    padding:8px 16px;
+                    background:#ffb3ba; color:#7a2035;
+                    border:none; border-radius:24px;
+                    font-family:'Gaegu', cursive; font-size:13px; font-weight:700;
+                    cursor:pointer; white-space:nowrap;">
+                    등록
+                </button>
             </div>
         </div>
     </div>
     `;
 }
 
-// 좋아요 기능 (나중에 구현)
-function onLikeClick(pid) {}
 
 // =============================================
 // 댓글창 슬라이드 토글 기능
