@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
+
     // 1. 파도타기 세션 정보 확인
     const savedId = sessionStorage.getItem("currentHostId");
     const savedNick = sessionStorage.getItem("currentHostNick");
@@ -158,8 +159,9 @@ const pageRoutes = {
     // 🚨 [여기에 핵심 추가] 쪽지함 메뉴를 클릭했을 때 initMessage()를 실행하도록 라우터에 등록한다.
     "message.jsp": {
         initFunc: () => typeof initMessage === "function" && initMessage(),
-        cssClass: ""
+        cssClass: "",
     }
+
 };
 
 function loadPage(url) {

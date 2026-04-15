@@ -10,12 +10,48 @@
 <body>
 <div class="nb-body home-wrapper">
 
+    <div class="home-daemoon-wrapper">
+        <div class="home-daemoon" id="home-daemoon">
+            <c:choose>
+                <c:when test="${not empty photoList and not empty photoList[0].imgName}">
+                    <div class="daemoon-photo-wall">
+
+                        <!-- 뒤쪽 사진 왼쪽 -->
+                        <div class="daemoon-photo-frame daemoon-frame-left">
+                            <div class="daemoon-img-wrapper">
+                                <img src="${not empty photoList[2].imgName ? photoList[2].imgName : ' '}" alt="">
+                            </div>
+                            <span class="daemoon-title">🌸</span>
+                        </div>
+
+                        <!-- 메인 사진 가운데 -->
+                        <div class="daemoon-photo-frame daemoon-frame-main">
+                            <div class="daemoon-tape daemoon-tape-left"></div>
+                            <div class="daemoon-tape daemoon-tape-right"></div>
+                            <div class="daemoon-img-wrapper">
+                                <img src="${photoList[0].imgName}" alt="대문 사진">
+                            </div>
+                            <span class="daemoon-title">✨ 최신사진 ✨</span>
+                        </div>
+
+                        <!-- 뒤쪽 사진 오른쪽 -->
+                        <div class="daemoon-photo-frame daemoon-frame-right">
+                            <div class="daemoon-img-wrapper">
+                                <img src="${not empty photoList[1].imgName ? photoList[1].imgName : ' '}" alt="">
+                            </div>
+                            <span class="daemoon-title">🎀</span>
+                        </div>
+
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <span style="color:#bbb; font-size:13px;">등록된 대문사진이 없습니다. 📷</span>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
 
 
-<div class="home-visual">
-    <span class="visual-placeholder">${searchMain.main_img}</span>
-
-</div>
 
 <div class="home-bottom-row">
 
@@ -59,7 +95,7 @@
                     <%-- 1-1. 내 홈피일 때: 입력창 띄우기 --%>
                     <c:when test="${isMyHome}">
                         <div class="qna-input-area" id="qna-form">
-                            <input type="hidden" id="qna-id" value="${dailyQna.q_id}">
+                            <input type="hidden"  autocomplete="off" id="qna-id" value="${dailyQna.q_id}">
                             <textarea id="qna-answer" class="qna-textarea" placeholder="오늘의 답변을 남겨보세요! ✏️"></textarea>
 
                             <div class="qna-btn-group">
@@ -115,6 +151,7 @@
 
 </div>
 
+</div>
 
 </body>
 </html>
