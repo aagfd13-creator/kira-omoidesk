@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="css/search.css"/>
     <link rel="stylesheet" href="css/user/loginbox.css"/>
     <link rel="stylesheet" href="css/qna.css"/>
+    <link rel="stylesheet" href="css/photo.css">
 
     <%-- JS --%>
     <script src="js/index.js"></script>

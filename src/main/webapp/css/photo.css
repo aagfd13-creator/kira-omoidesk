@@ -1,0 +1,307 @@
+@charset "UTF-8";
+
+/* =========================================
+   공통 레이아웃 & 애니메이션
+========================================= */
+.album-wrapper {
+    transform-origin: center center;
+}
+
+@keyframes shrinkIn {
+    0% { transform: scale(1.05); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes expandIn {
+    0% { transform: scale(0.92); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* =========================================
+   상단 헤더 영역
+========================================= */
+.album-header {
+    position: sticky;
+    top: -15px;
+    z-index: 10;
+    background: transparent;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.album-title {
+    margin: 0;
+    font-size: 20px;
+    color: #444;
+    font-weight: bold;
+    font-family: 'Gaegu', cursive;
+    letter-spacing: 0.5px;
+    text-shadow: 1px 1px 3px rgba(255,255,255,0.9), -1px -1px 3px rgba(255,255,255,0.9);
+}
+
+.album-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 상단 버튼들 (추가, 뒤로가기) */
+.album-btn-add {
+    width: 38px; height: 38px; border-radius: 50%;
+    border: none; background: #ffb3ba; color: #fff;
+    font-size: 24px; font-weight: 300; cursor: pointer;
+    align-items: center; justify-content: center;
+    box-shadow: 0 4px 12px rgba(255, 179, 186, 0.4);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+.album-btn-add:hover {
+    transform: scale(1.08);
+    background: #f5a3ab;
+}
+
+.album-btn-back {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #f8f9fa; border: 1px solid #eaeaea;
+    cursor: pointer; font-size: 14px; color: #666;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    transition: all 0.2s ease;
+}
+.album-btn-back:hover {
+    background: #f0f0f0;
+    transform: scale(1.05);
+}
+
+/* =========================================
+   그리드 뷰 (3x3)
+========================================= */
+.grid-container {
+    background: #f5f5f5;
+    min-height: 100%;
+    padding-bottom: 30px;
+}
+.grid-layout {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 2px;
+}
+.grid-item {
+    aspect-ratio: 1/1;
+    cursor: pointer;
+    overflow: hidden;
+    background: #eee;
+}
+.grid-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s;
+}
+.grid-item:hover img {
+    transform: scale(1.05);
+}
+
+/* =========================================
+   피드 뷰 (상세 카드)
+========================================= */
+.feed-container {
+    font-family: 'Gaegu', cursive;
+    background: #f5f5f5;
+    min-height: 100%;
+    padding-bottom: 30px;
+    padding-top: 10px;
+}
+.feed-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+}
+.feed-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 0.5px solid #eee;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    margin-bottom: 20px;
+}
+.feed-card-body {
+    display: flex;
+    flex-direction: row;
+}
+
+/* 피드 이미지 영역 */
+.feed-img-box {
+    width: 520px;
+    min-width: 520px;
+    height: 400px;
+    overflow: hidden;
+    border-right: 1px solid #eee;
+    position: relative;
+}
+.feed-img-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 피드 텍스트 영역 */
+.feed-info-box {
+    flex: 1;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+.feed-info-header {
+    display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+}
+.feed-post-title {
+    font-size: 22px; font-weight: bold; color: #444; font-family: 'Gaegu', cursive;
+}
+.btn-delete-post {
+    background: none; border: none; font-size: 18px; color: #ccc; cursor: pointer; padding: 0;
+    transition: color 0.2s;
+}
+.btn-delete-post:hover { color: #e55; }
+
+.feed-meta {
+    font-size: 13px; color: #c0b0a0; margin-bottom: 20px;
+    border-bottom: 1px dashed #eee; padding-bottom: 12px;
+}
+.feed-content-text {
+    font-size: 15px; color: #666; line-height: 1.6;
+    flex: 1; overflow-y: auto; white-space: pre-wrap; margin-bottom: 20px;
+}
+
+/* 피드 액션 (댓글 버튼 등) */
+.feed-actions {
+    display: flex; align-items: center; gap: 20px;
+    border-top: 1px dashed #eee; padding-top: 16px;
+}
+.btn-action {
+    background: none; border: none; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    color: #888; font-size: 15px; font-family: 'Gaegu'; padding: 0;
+}
+
+/* =========================================
+   댓글 영역
+========================================= */
+.comment-section {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-in-out;
+    background: #fdfcf8;
+    border-top: 1px solid #eee;
+}
+.comment-header {
+    padding: 14px 18px 10px;
+    border-bottom: 0.5px dashed #f0e6e8;
+    display: flex; align-items: center; gap: 6px;
+}
+.comment-header-title { font-size: 13px; color: #bbb; }
+.comment-badge {
+    background: #ffb3ba22; color: #d4537e;
+    font-size: 12px; font-weight: 700;
+    padding: 2px 8px; border-radius: 20px;
+    border: 1px solid #f4c0d133;
+}
+.comment-list {
+    padding: 6px 18px 0; display: flex; flex-direction: column;
+}
+.comment-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 0.5px dashed #f0eae8;
+}
+
+/* 파도타기 아바타 & 닉네임 */
+.comment-avatar {
+    width: 30px; height: 30px; min-width: 30px;
+    border-radius: 50%; background: #fbeaf0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #d4537e;
+    border: 1px solid #f4c0d155; overflow: hidden; cursor: pointer;
+}
+.comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.comment-author {
+    font-size: 14px; font-weight: 700; color: #444; cursor: pointer;
+}
+.comment-author:hover { text-decoration: underline; }
+.comment-date { font-size: 11px; color: #bbb; }
+.comment-text { font-size: 14px; color: #666; line-height: 1.5; }
+
+.btn-delete-comment {
+    background: none; border: none; cursor: pointer;
+    font-size: 13px; opacity: 0.35; padding: 2px 4px; border-radius: 4px;
+}
+.btn-delete-comment:hover { opacity: 1; }
+
+.comment-empty {
+    padding: 18px 0; text-align: center;
+    font-size: 13px; color: #ccc;
+}
+
+/* 댓글 입력창 */
+.comment-input-area {
+    padding: 12px 18px 14px; border-top: 0.5px dashed #f0e6e8;
+    display: flex; gap: 8px; align-items: center; margin-top: 4px;
+}
+.comment-input-box {
+    flex: 1; padding: 9px 14px; border: 1px solid #e8dde0; border-radius: 24px;
+    font-family: 'Gaegu', cursive; font-size: 14px; outline: none;
+    background: #fdfcfa; color: #555;
+}
+.btn-submit-comment {
+    padding: 8px 16px; background: #ffb3ba; color: #7a2035;
+    border: none; border-radius: 24px; font-family: 'Gaegu', cursive;
+    font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+
+/* =========================================
+   추가 모달 영역
+========================================= */
+.modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45); z-index: 1000;
+    justify-content: center; align-items: center;
+}
+.modal-box {
+    background: #fff; border-radius: 14px; padding: 28px;
+    width: 400px; max-width: 90%;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+    font-family: 'Gaegu', cursive;
+}
+.modal-title {
+    margin: 0 0 18px; font-size: 18px;
+    border-bottom: 2px dashed #ddd; padding-bottom: 10px;
+}
+.modal-field { margin-bottom: 14px; }
+.modal-field.last { margin-bottom: 22px; }
+.modal-label { font-size: 14px; color: #555; display: block; margin-bottom: 6px; }
+.modal-input, .modal-textarea {
+    width: 100%; padding: 8px 10px; font-size: 14px; font-family: 'Gaegu';
+    border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box;
+}
+.modal-textarea { resize: none; }
+.modal-preview {
+    display: none; margin-top: 10px; width: 100%; max-height: 160px;
+    object-fit: cover; border-radius: 8px; border: 1px solid #eee;
+}
+.modal-actions {
+    display: flex; justify-content: flex-end; gap: 10px;
+}
+.btn-modal-cancel {
+    padding: 8px 18px; border: 1px solid #ccc; border-radius: 6px;
+    background: #f5f5f5; cursor: pointer; font-family: 'Gaegu'; font-size: 14px;
+}
+.btn-modal-submit {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    background: #555; color: #fff; cursor: pointer;
+    font-family: 'Gaegu'; font-size: 14px;
+}
