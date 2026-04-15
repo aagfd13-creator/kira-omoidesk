@@ -8,6 +8,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.List;
 
 public class PhotoDAO {
     public static final PhotoDAO PDAO = new PhotoDAO();
@@ -19,13 +20,14 @@ public class PhotoDAO {
         ResultSet rs = null;
         String sql = "select * from photo where user_id = ? order by reg_date desc ";
         String hostId = request.getParameter("host_id");
-        if (hostId == null || hostId.isEmpty()) {
-            HttpSession session = request.getSession();
-            hostId = session.getAttribute("loginUserId").toString();
-        }
+//        if (hostId == null || hostId.isEmpty()) {
+//            HttpSession session = request.getSession();
+//            hostId = session.getAttribute("loginUserId").toString();
+//        }
 
         try {
             conn = DBManager.connect();
+            System.out.println("conn success!!");
             ps = conn.prepareStatement(sql);
             ps.setString(1, hostId);
             rs = ps.executeQuery();
@@ -40,8 +42,9 @@ public class PhotoDAO {
                 photos.add(photo.toJSON());
 
             }
-            System.out.println(photos);
+//            System.out.println(photos);
             System.out.println(hostId);
+            System.out.println("is that you..?");
             return photos;
         } catch (Exception e) {
             e.printStackTrace();
@@ -153,6 +156,49 @@ public class PhotoDAO {
         }
 
         return 0;
+    }
+
+    public List<PhotoDTO> getPhotoList(HttpServletRequest request) {
+
+        Connection conn = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        String sql = "select * from photo where user_id = ? order by reg_date desc ";
+        String hostId = request.getParameter("host_id");
+//        if (hostId == null || hostId.isEmpty()) {
+//            HttpSession session = request.getSession();
+//            hostId = session.getAttribute("loginUserId").toString();
+//        }
+
+        try {
+            conn = DBManager.connect();
+            System.out.println("conn success!!");
+            ps = conn.prepareStatement(sql);
+            ps.setString(1, hostId);
+            rs = ps.executeQuery();
+            ArrayList<PhotoDTO> photos = new ArrayList<>();
+            while (rs.next()) {
+                PhotoDTO photo = new PhotoDTO();
+                photo.setUserId(rs.getString(2));
+                photo.setImgName(rs.getString(3));
+                photo.setTitle(rs.getString(4));
+                photo.setContent(rs.getString(5));
+                photo.setRegDate(rs.getString(6));
+                photos.add(photo);
+
+            }
+//            System.out.println(photos);
+            System.out.println(hostId);
+            System.out.println("is that you..?");
+            return photos;
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        } finally {
+            DBManager.close(conn, ps, rs);
+        }
+        return null;
+
     }
 }
 

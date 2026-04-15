@@ -69,86 +69,114 @@ function renderFeedView(hostId) {
 // =============================================
 // 피드 카드 1장 빌더
 // =============================================
-function buildFeedCard(item, index,isOwner) {
+// =============================================
+// 피드 카드 1장 빌더 (리뉴얼 버전)
+// =============================================
+function buildFeedCard(item, index, isOwner) {
     return `
     <div id="detail-card-${index}" style="
         background:#fff; border-radius:12px;
         border:0.5px solid #eee; overflow:hidden;
-        display:flex; flex-direction:row;">
+        display:flex; flex-direction:column;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03); margin-bottom: 20px;">
 
-        <div style="width:260px; min-width:260px; height:200px; overflow:hidden;">
-            <img id="detail-img-${index}"
-                 src="${item.imgName}"
-                 style="width:100%; height:100%; object-fit:cover; display:block;">
-            <input type="file" id="img-input-${index}" accept="image/*"
-                   style="display:none;" onchange="applyImgEdit(${index}, event)">
-        </div>
+        <div style="display:flex; flex-direction:row;">
+            
+            <div style="width:520px; min-width:520px; height:400px; overflow:hidden; border-right:1px solid #eee;">
+                <img id="detail-img-${index}"
+                     src="${item.imgName}"
+                     style="width:100%; height:100%; object-fit:cover; display:block;">
+                <input type="file" id="img-input-${index}" accept="image/*"
+                       style="display:none;" onchange="applyImgEdit(${index}, event)">
+            </div>
 
-        <div style="flex:1; padding:20px; display:flex; flex-direction:column;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-                <div>
-                    <div style="font-size:11px; color:#c0b0a0; margin-bottom:4px;">📅 ${item.regDate}</div>
+            <div style="flex:1; padding:24px; display:flex; flex-direction:column;">
+                
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
                     <div id="title-view-${index}"
-                         style="font-size:16px; font-weight:bold; color:#444;
-                                border-left:3px solid #ffb3ba; padding-left:8px;">
+                         style="font-size:22px; font-weight:bold; color:#444; font-family:'Gaegu', cursive;">
                         ${item.title}
                     </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:11px; color:#bbb; font-weight:bold;">👤 ${item.userId}</span>
                     <button onclick="deletePhoto(${index})" style="
                         display:${isOwner ? 'inline' : 'none'};
-                        background:none; border:none; font-size:16px;
-                        color:#ccc; cursor:pointer; line-height:1; padding:0;"
+                        background:none; border:none; font-size:18px;
+                        color:#ccc; cursor:pointer; padding:0;"
                         onmouseover="this.style.color='#e55'"
                         onmouseout="this.style.color='#ccc'">✕</button>
                 </div>
-            </div>
 
-            <div id="content-view-${index}"
-                 style="font-size:13px; 
-                        color:#888; 
-                        line-height:1.6;
-                        border-top:1px dashed #eee; 
-                        padding:12px 0; /* 상하 패딩 조절 */
-                        margin-top:8px;
-                        white-space:pre-wrap;
-                        text-align:left; /* 왼쪽 정렬 명시 */
-                        height:85px; /* 고정 높이를 주어야 스크롤 판단 기준이 생깁니다 */
-                        overflow-y:auto; /* 내용이 넘칠 때만 스크롤 생성 */
-                        scrollbar-width: thin; /* (선택) 스크롤바를 얇게 */
-                        ">${item.content}</div>
+                <div style="font-size:13px; color:#c0b0a0; margin-bottom:20px; border-bottom:1px dashed #eee; padding-bottom:12px;">
+                    📅 ${item.regDate} &nbsp;|&nbsp; 👤 ${item.userId}
+                </div>
 
-            <div style="display:flex; align-items:center; gap:16px;
-                        border-top:1px dashed #eee; padding-top:12px; margin-top:auto;">
-                <button onclick="onLikeClick(${index})" style="
-                    background:none; border:none; cursor:pointer;
-                    display:flex; align-items:center; gap:5px;
-                    color:#e88; font-size:13px; font-family:'Gaegu'; padding:0;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e88" stroke-width="2">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
-                    <span id="like-count-${index}">0</span>
-                </button>
-                <button onclick="onCommentClick(${index})" style="
-                    background:none; border:none; cursor:pointer;
-                    display:flex; align-items:center; gap:5px;
-                    color:#aaa; font-size:13px; font-family:'Gaegu'; padding:0;">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    <span id="comment-count-${index}">0</span>
-                </button>
+                <div id="content-view-${index}"
+                     style="font-size:15px; color:#666; line-height:1.6;
+                            flex:1; overflow-y:auto; white-space:pre-wrap;
+                            margin-bottom:20px; font-family:'Gaegu', cursive;">${item.content}</div>
+
+                <div style="display:flex; align-items:center; gap:20px; border-top:1px dashed #eee; padding-top:16px;">
+                    <button onclick="onLikeClick(${index})" style="
+                        background:none; border:none; cursor:pointer;
+                        display:flex; align-items:center; gap:6px;
+                        color:#e88; font-size:15px; font-family:'Gaegu'; padding:0;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e88" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                        <span id="like-count-${index}">0</span>
+                    </button>
+                    <button onclick="toggleComment(${index})" style="
+                        background:none; border:none; cursor:pointer;
+                        display:flex; align-items:center; gap:6px;
+                        color:#888; font-size:15px; font-family:'Gaegu'; padding:0;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                        </svg>
+                        <span>댓글</span>
+                        <span id="comment-count-${index}">${item.comments ? item.comments.length : 0}</span>
+                    </button>
+                </div>
             </div>
+        </div>
+
+        <div id="comment-section-${index}" style="
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out;
+            background: #fdfcf8; border-top: 1px solid #eee;">
+            <div style="padding: 20px;">
+                <div style="font-size:14px; color:#777; margin-bottom:10px;">댓글을 남겨보세요 💬</div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" placeholder="내용을 입력하세요..." style="
+                        flex:1; padding:8px 12px; border:1px solid #ddd; border-radius:20px;
+                        font-family:'Gaegu', cursive; font-size:14px; outline:none;">
+                    <button style="
+                        padding:6px 16px; background:#ffb3ba; color:#fff; border:none;
+                        border-radius:20px; font-family:'Gaegu', cursive; cursor:pointer;">등록</button>
+                </div>
+                    <div style="margin-top:15px; font-size:13px; color:#888;">${item.comments && item.comments.length > 0 ? item.comments.map(c => 
+                    `<div style="padding:8px 0; border-bottom:1px dashed #eee;">
+                        <b>${c.userId}</b> : ${c.content}
+                    </div>`).join('')  : `<div style="padding:8px 0;">아직 작성된 댓글이 없222습니다.</div>`}
+                    </div>          
+                     </div>
         </div>
     </div>
     `;
 }
-
 // 좋아요 / 댓글 - 로직은 나중에
 function onLikeClick(index) {}
-function onCommentClick(index) {}
 
+// =============================================
+// 댓글창 슬라이드 토글 기능
+// =============================================
+function toggleComment(index) {
+    const commentSection = document.getElementById(`comment-section-${index}`);
+
+    // max-height 값을 조절해서 부드럽게 열리고 닫히는 효과
+    if (commentSection.style.maxHeight === '0px' || commentSection.style.maxHeight === '') {
+        commentSection.style.maxHeight = '500px'; // 열기
+    } else {
+        commentSection.style.maxHeight = '0px'; // 닫기
+    }
+}
 // =============================================
 // 이미지 수정
 // =============================================

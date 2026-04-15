@@ -15,7 +15,7 @@
         <h1 class="login-title">Login</h1>
         <div class="login-subtitle">아이디와 비밀번호를 입력해주세요</div>
 
-        <form id="loginForm">
+        <form id="loginForm" autocomplete="off">
             <div class="input-group">
                 <label for="id">아이디</label>
                 <input id="id" name="id" placeholder="아이디 입력">
@@ -27,7 +27,6 @@
             </div>
 
             <button type="button" id="loginBtn">로그인</button>
-            <a href="${pageContext.request.contextPath}/oauth/naver/start">네이버로 로그인</a>
         </form>
 
         <div class="login-links">
