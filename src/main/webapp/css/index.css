@@ -221,25 +221,30 @@ body::after {
 
 .pencil-jar-wrap {
     margin-top: auto;
-    margin-left: 15px;
-    margin-bottom: 20px;
+    margin-left: 20px;
+    margin-bottom: 25px;
     transform: rotate(-3deg);
     cursor: pointer;
     position: relative;
     z-index: 10;
+
+    /* 🌟 투명했던 필통에 실체(디자인)를 부여합니다 */
+    width: 55px;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--theme-border); /* 테마 바꿀 때 필통 선 색상도 같이 바뀜! */
+    border-radius: 3px 3px 15px 15px; /* 아래가 둥근 컵 모양 */
+    box-shadow: 3px 5px 10px rgba(100, 90, 80, 0.08),
+    inset -2px -5px 10px rgba(0,0,0,0.03); /* 안쪽 그림자로 입체감 줌 */
 }
-
-
-
-
 
 .tools-out {
     position: absolute;
-    top: 20px;
-    left: 15px;
+    bottom: 5px; /* 펜을 필통 바닥 쪽으로 끌어내림 */
+    left: 8px;   /* 펜들을 필통 가운데로 정렬 */
     display: flex;
-    gap: 5px;
-    z-index: -1;
+    gap: 6px;
+    z-index: -1; /* 🌟 핵심: 펜을 필통 '뒤'로 숨겨서 안에 꽂힌 것처럼 보이게 하는 마법 */
 }
 
 .tool {
@@ -247,8 +252,7 @@ body::after {
     height: 55px;
     border-radius: 2px 2px 0 0;
     position: relative;
-    margin-right: 7px;
-    transition: top 0.2s ease-out;
+    transition: top 0.2s ease-out, transform 0.2s;
 }
 
 .tool::after {
@@ -262,29 +266,26 @@ body::after {
     border-radius: 50% 50% 0 0;
 }
 
-
 .tool:hover {
-    top: -20px;
+    transform: translateY(-15px); /* 마우스 올리면 펜이 위로 쏙 뽑히는 액션 */
 }
 
+/* 기존에 있던 불필요한 left: -33px 제거 */
 .pencil1 {
     background: #ee99aa;
     height: 75px;
     transform: translateY(-5px);
-    left: -33px;
 }
 
 .pencil2 {
     background: #77ddbb;
     height: 65px;
     transform: translateY(5px);
-    left: -33px;
 }
 
 .pencil3 {
     background: #a099ee;
     height: 70px;
-    left: -33px;
 }
 
 

@@ -151,9 +151,9 @@ public class HomeDAO {
                     "         TO_CHAR(d_date, 'MM') as d_month, " +
                     "         TO_CHAR(d_date, 'DD') as d_day " +
                     "  FROM diary_test " +
-                    "  WHERE TRIM(d_id) = ? " +
+                    "  WHERE TRIM(d_id) = ? " + // 공백없애는거 
                     "  ORDER BY d_no DESC" +
-                    ") WHERE ROWNUM = 1";
+                    ") WHERE ROWNUM = 1";//가장 최신순의 1개의 행만 가져오기 위한 조건 !
 
             pstmt = con.prepareStatement(sql);
             pstmt.setString(1, hostId.trim());
